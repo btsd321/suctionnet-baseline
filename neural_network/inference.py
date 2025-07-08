@@ -14,17 +14,17 @@ import cv2
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', default='deeplabv3plus_resnet101', help='Model file name [default: votenet]')
+parser.add_argument('--model', default='deeplabv3plus_resnet101', help='模型文件名 [默认: votenet]')
 parser.add_argument("--num_classes", type=int, default=2)
 parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
-parser.add_argument('--log_dir', default='log_inf', help='Dump dir to save model checkpoint [default: log]')
-parser.add_argument('--split', default='test_seen', help='dataset split [default: test_seen]')
-parser.add_argument('--camera', default='kinect', help='camera to use [default: kinect]')
-parser.add_argument('--dataset_root', default='/DATA2/Benchmark/graspnet', help='where dataset is')
-parser.add_argument('--save_dir', default='/DATA2/Benchmark/suction/inference_results/deeplabV3plus', help='Dump dir to save model checkpoint [default: log]')
-parser.add_argument('--checkpoint_path', default='checkpoints/checkpoint_30', help='Model checkpoint path [default: None]')
-parser.add_argument('--overwrite', action='store_true', help='Overwrite existing log and dump folders.')
-parser.add_argument('--save_visu', action='store_true', help='whether to save visualizations.')
+parser.add_argument('--log_dir', default='log_inf', help='日志保存目录 [默认: log]')
+parser.add_argument('--split', default='test_seen', help='数据集划分 [默认: test_seen]')
+parser.add_argument('--camera', default='kinect', help='使用的相机类型 [默认: kinect]')
+parser.add_argument('--dataset_root', default='/DATA2/Benchmark/graspnet', help='数据集根目录')
+parser.add_argument('--save_dir', default='/DATA2/Benchmark/suction/inference_results/deeplabV3plus', help='推理结果保存目录 [默认: log]')
+parser.add_argument('--checkpoint_path', default='checkpoints/checkpoint_30', help='模型权重路径 [默认: None]')
+parser.add_argument('--overwrite', action='store_true', help='是否覆盖已有日志和结果文件夹。')
+parser.add_argument('--save_visu', action='store_true', help='是否保存可视化结果。')
 FLAGS = parser.parse_args()
 
 
@@ -36,7 +36,7 @@ camera = FLAGS.camera
 dataset_root = FLAGS.dataset_root
 scene_list = []
 
-# # Prepare LOG_DIR and DUMP_DIR
+# # 日志和结果文件夹准备
 # if os.path.exists(LOG_DIR) and FLAGS.overwrite:
 #     print('Log folder %s already exists. Are you sure to overwrite? (Y/N)'%(LOG_DIR))
 #     c = input()
@@ -59,6 +59,7 @@ scene_list = []
 #     print(out_str)
 
 def my_worker_init_fn(worker_id):
+    # 多进程数据加载时的随机种子初始化
     np.random.seed(np.random.get_state()[1][0] + worker_id)
     pass
 
@@ -73,6 +74,7 @@ model_map = {
         'convnet_resnet101': ConvNet.convnet_resnet101,
         'deeplabv3plus_resnet101_depth': network.deeplabv3plus_resnet101_depth
     }
+# 根据参数选择模型
 net = model_map[FLAGS.model](num_classes=FLAGS.num_classes, output_stride=FLAGS.output_stride)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 net = nn.DataParallel(net)
@@ -90,6 +92,7 @@ if CHECKPOINT_PATH is not None and os.path.isfile(CHECKPOINT_PATH):
     EPOCH_CNT = checkpoint['epoch']
 
 def uniform_kernel(kernel_size):
+    # 生成均值卷积核
     kernel = np.ones((kernel_size, kernel_size), dtype=np.float32)
     # center = kernel_size // 2
     kernel = kernel / kernel_size**2
@@ -98,6 +101,7 @@ def uniform_kernel(kernel_size):
 
 class CameraInfo():
     def __init__(self, width, height, fx, fy, cx, cy, scale):
+        # 相机内参信息
         self.width = width
         self.height = height
         self.fx = fx
@@ -107,6 +111,7 @@ class CameraInfo():
         self.scale = scale
 
 def create_point_cloud_from_depth_image(depth, camera, organized=True):
+    # 根据深度图和相机内参生成点云
     assert(depth.shape[0] == camera.height and depth.shape[1] == camera.width)
     xmap = np.arange(camera.width)
     ymap = np.arange(camera.height)
@@ -120,6 +125,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
     return cloud
 
 def grid_sample(pred_score_map, down_rate=20, topk=512):
+    # 对预测分数图进行网格采样，返回topk分数及其像素坐标
     num_row = pred_score_map.shape[0] // down_rate
     num_col = pred_score_map.shape[1] // down_rate
 
@@ -149,38 +155,40 @@ def grid_sample(pred_score_map, down_rate=20, topk=512):
     return suction_scores_topk, idx0_topk, idx1_topk
 
 def drawGaussian(img, pt, score, sigma=1):
-    """Draw 2d gaussian on input image.
-    Parameters
+    """
+    在输入图像上绘制二维高斯分布
+    参数说明
     ----------
     img: torch.Tensor
-        A tensor with shape: `(3, H, W)`.
+        输入图像，形状为 (H, W)。
     pt: list or tuple
-        A point: (x, y).
+        点坐标 (x, y)。
+    score: float
+        高斯分布的强度（权重）。
     sigma: int
-        Sigma of gaussian distribution.
-    Returns
+        高斯分布的标准差。
+    返回
     -------
     torch.Tensor
-        A tensor with shape: `(3, H, W)`.
+        形状为 (H, W) 的张量。
     """
-    # img = to_numpy(img)
     tmp_img = np.zeros([img.shape[0], img.shape[1]], dtype=np.float32)
     tmpSize = 3 * sigma
-    # Check that any part of the gaussian is in-bounds
+    # 检查高斯分布是否在图像范围内
     ul = [int(pt[0] - tmpSize), int(pt[1] - tmpSize)]
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
-        # If not, just return the image as is
+        # 如果不在范围内，直接返回原图
         return img
 
-    # Generate gaussian
+    # 生成高斯分布
     size = 2 * tmpSize + 1
     x = np.arange(0, size, 1, float)
     y = x[:, np.newaxis]
     x0 = y0 = size // 2
     
-    # Usable gaussian range
+    # 有效高斯区域
     g_x = max(0, -ul[0]), min(br[0], img.shape[1]) - ul[0]
     g_y = max(0, -ul[1]), min(br[1], img.shape[0]) - ul[1]
     img_x = max(0, ul[0]), min(br[0], img.shape[1])
@@ -193,6 +201,7 @@ def drawGaussian(img, pt, score, sigma=1):
     img += tmp_img
 
 def get_suction_from_heatmap(depth_img, heatmap, camera_info):
+    # 从热力图中采样吸取点，返回吸取分数、法向量和三维坐标
     suction_scores, idx0, idx1 = grid_sample(heatmap, down_rate=10, topk=1024)
 
     if len(depth_img.shape) == 3:
@@ -223,7 +232,7 @@ def get_suction_from_heatmap(depth_img, heatmap, camera_info):
     return suction_arr, idx0, idx1
 
 def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
-    
+    # 对单帧图像进行推理，保存吸取点结果和可视化
     meta = scio.loadmat(meta_file)
     intrinsics = meta['intrinsic_matrix']
     fx, fy = intrinsics[0,0], intrinsics[1,1]
@@ -257,6 +266,7 @@ def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
     toc = time.time()
     print('inference time:', toc - tic)
 
+    # 计算热力图
     heatmap = (pred[0, 0] * pred[0, 1]).cpu().unsqueeze(0).unsqueeze(0)
     
     k_size = 15
@@ -276,7 +286,7 @@ def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
         rgb_img = rgbd[0].permute(1, 2, 0)[..., :3].cpu().numpy()
         rgb_img *= 255
         
-        # predictions
+        # 预测结果可视化
         score = pred[0, 0].clamp(0, 1).cpu().numpy()
         center = pred[0, 1].clamp(0, 1).cpu().numpy()
 
@@ -317,7 +327,7 @@ def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
         print('saving:', mix_file)
         mix_img.save(mix_file)
 
-        # sampled suctions
+        # 可视化采样吸取点
         sampled_img = np.zeros_like(heatmap)
         for i in range(suctions.shape[0]):
             drawGaussian(sampled_img, [idx1[i], idx0[i]], suctions[i, 0], 3)
@@ -336,7 +346,7 @@ def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
 
 
 def inference(scene_idx):
-    
+    # 对指定scene的所有帧进行推理
     for anno_idx in range(256):
 
         rgb_file = os.path.join(dataset_root, 'scenes/scene_{:04d}/{}/rgb/{:04d}.png'.format(scene_idx, camera, anno_idx))
@@ -347,7 +357,7 @@ def inference(scene_idx):
         inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx)
 
 if __name__ == "__main__":
-    
+    # 主程序入口，根据split选择scene范围，依次推理
     scene_list = []
     if split == 'test':
         for i in range(100, 190):
@@ -366,5 +376,5 @@ if __name__ == "__main__":
     
     for scene_idx in scene_list:
         inference(scene_idx)
-    
+
 

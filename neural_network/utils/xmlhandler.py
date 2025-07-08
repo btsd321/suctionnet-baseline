@@ -10,6 +10,7 @@ import os
 
 class xmlWriter():
     def __init__(self, topfromreader=None):
+        # 初始化xmlWriter，支持从已有XML结构恢复
         self.topfromreader = topfromreader
         self.poselist = []
         self.objnamelist = []
@@ -17,13 +18,15 @@ class xmlWriter():
         self.objidlist = []
 
     def addobject(self, pose, objname, objpath, objid):
-        # pose is the 4x4 matrix representation of 6d pose
+        # 添加一个物体的位姿、名称、路径和ID到列表
+        # pose为6D位姿的4x4矩阵
         self.poselist.append(pose)
         self.objnamelist.append(objname)
         self.objpathlist.append(objpath)
         self.objidlist.append(objid)
 
     def objectlistfromposevectorlist(self, posevectorlist, objdir, objnamelist, objidlist):
+        # 根据位姿向量列表和物体信息批量添加物体
         self.poselist = []
         self.objnamelist = []
         self.objidlist = []
@@ -35,6 +38,7 @@ class xmlWriter():
                            objname, os.path.join(objdir, objname), id)
 
     def writexml(self, xmlfilename='scene.xml'):
+        # 将当前物体列表写入XML文件
         if self.topfromreader is not None:
             self.top = self.topfromreader
         else:
@@ -63,7 +67,7 @@ class xmlWriter():
                 quat[0], quat[1], quat[2], quat[3])
         xmlstr = xml.dom.minidom.parseString(
             tostring(self.top)).toprettyxml(indent='    ')
-        # remove blank line
+        # 移除空白行
         xmlstr = "".join([s for s in xmlstr.splitlines(True) if s.strip()])
         with open(xmlfilename, 'w') as f:
             f.write(xmlstr)
@@ -72,20 +76,23 @@ class xmlWriter():
 
 class xmlReader():
     def __init__(self, xmlfilename):
+        # 读取并解析XML文件
         self.xmlfilename = xmlfilename
         etree = ET.parse(self.xmlfilename)
         self.top = etree.getroot()
 
     def showinfo(self):
+        # 打印XML中已存储的物体名称
         print('Resumed object(s) already stored in '+self.xmlfilename+':')
         for i in range(len(self.top)):
             print(self.top[i][1].text)
 
     def gettop(self):
+        # 返回XML根节点
         return self.top
 
     def getposevectorlist(self):
-        # posevector foramat: [objectid,x,y,z,alpha,beta,gamma]
+        # 解析XML，返回每个物体的位姿向量 [objectid, x, y, z, alpha, beta, gamma]
         posevectorlist = []
         for i in range(len(self.top)):
             objectid = int(self.top[i][0].text)
@@ -109,19 +116,22 @@ class xmlReader():
 
 
 def empty_pose_vector(objectid):
-    # [object id,x,y,z,alpha,beta,gamma]
-    # alpha, beta and gamma are in degree
-	return [objectid, 0.0, 0.0, 0.4, 0.0, 0.0, 0.0]
+    # 返回一个初始化的空位姿向量 [object id, x, y, z, alpha, beta, gamma]
+    # 其中alpha, beta, gamma为欧拉角（单位：度）
+    return [objectid, 0.0, 0.0, 0.4, 0.0, 0.0, 0.0]
 
 
 def empty_pose_vector_list(objectidlist):
-	pose_vector_list = []
-	for id in objectidlist:
-		pose_vector_list.append(empty_pose_vector(id))
-	return pose_vector_list
+    # 根据物体ID列表生成空位姿向量列表
+    pose_vector_list = []
+    for id in objectidlist:
+        pose_vector_list.append(empty_pose_vector(id))
+    return pose_vector_list
 
 
 def getposevectorlist(objectidlist, is_resume, num_frame, frame_number, xml_dir):
+    # 获取指定帧的物体位姿向量列表
+    # 若is_resume为False或XML文件不存在，则返回空位姿向量列表
     if not is_resume or (not os.path.exists(os.path.join(xml_dir, '%04d.xml' % num_frame))):
         print('log:create empty pose vector list')
         return empty_pose_vector_list(objectidlist)
@@ -142,6 +152,7 @@ def getposevectorlist(objectidlist, is_resume, num_frame, frame_number, xml_dir)
 
 
 def getframeposevectorlist(objectidlist, is_resume, frame_number, xml_dir):
+    # 获取所有帧的物体位姿向量列表（每帧一个列表）
     frameposevectorlist = []
     for num_frame in range(frame_number):
         if not is_resume or (not os.path.exists(os.path.join(xml_dir,'%04d.xml' % num_frame))):

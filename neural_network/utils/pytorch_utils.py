@@ -1,14 +1,17 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # 
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
+# 本源码遵循根目录 LICENSE 文件中的 MIT 协议。
 
-''' Modified based on Ref: https://github.com/erikwijmans/Pointnet2_PyTorch '''
+''' 本文件在 Ref: https://github.com/erikwijmans/Pointnet2_PyTorch 基础上修改 '''
+
 import torch
 import torch.nn as nn
 from typing import List, Tuple
 
 class SharedMLP(nn.Sequential):
+    """
+    多层感知机（MLP）模块，可选批归一化和激活函数，支持预激活结构。
+    """
 
     def __init__(
             self,
@@ -37,6 +40,9 @@ class SharedMLP(nn.Sequential):
 
 
 class _BNBase(nn.Sequential):
+    """
+    批归一化基础类，自动初始化权重和偏置。
+    """
 
     def __init__(self, in_size, batch_norm=None, name=""):
         super().__init__()
@@ -47,24 +53,36 @@ class _BNBase(nn.Sequential):
 
 
 class BatchNorm1d(_BNBase):
+    """
+    一维批归一化封装
+    """
 
     def __init__(self, in_size: int, *, name: str = ""):
         super().__init__(in_size, batch_norm=nn.BatchNorm1d, name=name)
 
 
 class BatchNorm2d(_BNBase):
+    """
+    二维批归一化封装
+    """
 
     def __init__(self, in_size: int, name: str = ""):
         super().__init__(in_size, batch_norm=nn.BatchNorm2d, name=name)
 
 
 class BatchNorm3d(_BNBase):
+    """
+    三维批归一化封装
+    """
 
     def __init__(self, in_size: int, name: str = ""):
         super().__init__(in_size, batch_norm=nn.BatchNorm3d, name=name)
 
 
 class _ConvBase(nn.Sequential):
+    """
+    卷积层基础类，支持可选批归一化、激活函数、预激活结构等。
+    """
 
     def __init__(
             self,
@@ -104,6 +122,7 @@ class _ConvBase(nn.Sequential):
                 bn_unit = batch_norm(in_size)
 
         if preact:
+            # 预激活结构：先BN和激活，再卷积
             if bn:
                 self.add_module(name + 'bn', bn_unit)
 
@@ -113,6 +132,7 @@ class _ConvBase(nn.Sequential):
         self.add_module(name + 'conv', conv_unit)
 
         if not preact:
+            # 非预激活结构：卷积后再BN和激活
             if bn:
                 self.add_module(name + 'bn', bn_unit)
 
@@ -121,6 +141,9 @@ class _ConvBase(nn.Sequential):
 
 
 class Conv1d(_ConvBase):
+    """
+    一维卷积模块，支持可选BN、激活、预激活等
+    """
 
     def __init__(
             self,
@@ -155,6 +178,9 @@ class Conv1d(_ConvBase):
 
 
 class Conv2d(_ConvBase):
+    """
+    二维卷积模块，支持可选BN、激活、预激活等
+    """
 
     def __init__(
             self,
@@ -189,6 +215,9 @@ class Conv2d(_ConvBase):
 
 
 class Conv3d(_ConvBase):
+    """
+    三维卷积模块，支持可选BN、激活、预激活等
+    """
 
     def __init__(
             self,
@@ -223,6 +252,9 @@ class Conv3d(_ConvBase):
 
 
 class FC(nn.Sequential):
+    """
+    全连接层模块，支持可选BN、激活、预激活等
+    """
 
     def __init__(
             self,
@@ -244,6 +276,7 @@ class FC(nn.Sequential):
             nn.init.constant_(fc.bias, 0)
 
         if preact:
+            # 预激活结构
             if bn:
                 self.add_module(name + 'bn', BatchNorm1d(in_size))
 
@@ -253,6 +286,7 @@ class FC(nn.Sequential):
         self.add_module(name + 'fc', fc)
 
         if not preact:
+            # 非预激活结构
             if bn:
                 self.add_module(name + 'bn', BatchNorm1d(out_size))
 
@@ -260,7 +294,9 @@ class FC(nn.Sequential):
                 self.add_module(name + 'activation', activation)
 
 def set_bn_momentum_default(bn_momentum):
-
+    """
+    返回一个函数，用于设置模型中所有BN层的动量参数
+    """
     def fn(m):
         if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
             m.momentum = bn_momentum
@@ -269,6 +305,9 @@ def set_bn_momentum_default(bn_momentum):
 
 
 class BNMomentumScheduler(object):
+    """
+    BN动量调度器，可根据epoch动态调整BN层的momentum
+    """
 
     def __init__(
             self, model, bn_lambda, last_epoch=-1,
@@ -289,6 +328,7 @@ class BNMomentumScheduler(object):
         self.last_epoch = last_epoch
 
     def step(self, epoch=None):
+        # 根据当前epoch设置BN层的momentum
         if epoch is None:
             epoch = self.last_epoch + 1
 

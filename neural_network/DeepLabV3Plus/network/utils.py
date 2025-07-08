@@ -5,71 +5,68 @@ import torch.nn.functional as F
 from collections import OrderedDict
 
 class _SimpleSegmentationModel(nn.Module):
+    # 简单分割模型，包含一个主干网络和一个分类头
     def __init__(self, backbone, classifier):
         super(_SimpleSegmentationModel, self).__init__()
-        self.backbone = backbone
-        self.classifier = classifier
+        self.backbone = backbone  # 主干网络
+        self.classifier = classifier  # 分类头
         
     def forward(self, x):
-        input_shape = x.shape[-2:]
-        features = self.backbone(x)
-        x = self.classifier(features)
-        # print('x:', x.shape)
+        input_shape = x.shape[-2:]  # 输入的空间尺寸（高、宽）
+        features = self.backbone(x)  # 提取特征
+        x = self.classifier(features)  # 分类预测
+        # 上采样到输入空间大小，保证输出与输入尺寸一致
         x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
         return x
-
 
 class _MySegmentationModel(nn.Module):
+    # 双塔分割模型，包含两个主干网络、两个融合层和一个分类头
     def __init__(self, backbone1, backbone2, fuselayers1, fuselayers2, classifier):
         super(_MySegmentationModel, self).__init__()
-        self.backbone1 = backbone1
-        self.backbone2 = backbone2
-        self.fuselayers1 = fuselayers1
-        self.fuselayers2 = fuselayers2
-        self.classifier = classifier
+        self.backbone1 = backbone1  # 第一个主干网络（如RGB）
+        self.backbone2 = backbone2  # 第二个主干网络（如D）
+        self.fuselayers1 = fuselayers1  # 第一个融合层（低层特征融合）
+        self.fuselayers2 = fuselayers2  # 第二个融合层（高层特征融合）
+        self.classifier = classifier    # 分类头
         
     def forward(self, x):
-        input_shape = x.shape[-2:]
-        x1 = x[:, :3, ...]
-        x2 = x[:, 3:, ...]
-        features1 = self.backbone1(x1)
-        features2 = self.backbone2(x2)
-        # print('feature1:', features1.keys())
+        input_shape = x.shape[-2:]  # 输入的空间尺寸
+        x1 = x[:, :3, ...]  # 取前3通道（如RGB）
+        x2 = x[:, 3:, ...]  # 取后面通道（如D或其他）
+        features1 = self.backbone1(x1)  # 主干1特征
+        features2 = self.backbone2(x2)  # 主干2特征
         features = {}
+        # 拼接两个主干网络的低层特征，并通过融合层
         features['low_level'] = torch.cat([features1['low_level'], features2['low_level']], dim=1)
         features['low_level'] = self.fuselayers1(features['low_level'])
-
+        # 拼接两个主干网络的高层特征，并通过融合层
         features['out'] = torch.cat([features1['out'], features2['out']], dim=1)
         features['out'] = self.fuselayers2(features['out'])
+        # 分类预测
         x = self.classifier(features)
+        # 上采样到输入空间大小，保证输出与输入尺寸一致
         x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
         return x
-
 
 class IntermediateLayerGetter(nn.ModuleDict):
     """
-    Module wrapper that returns intermediate layers from a model
+    模型包装器，用于返回模型的中间层输出
 
-    It has a strong assumption that the modules have been registered
-    into the model in the same order as they are used.
-    This means that one should **not** reuse the same nn.Module
-    twice in the forward if you want this to work.
+    该模块有一个重要假设：模型的子模块注册顺序与实际前向传播顺序一致。
+    也就是说，如果你希望正常工作，不要在forward中重复使用同一个nn.Module。
 
-    Additionally, it is only able to query submodules that are directly
-    assigned to the model. So if `model` is passed, `model.feature1` can
-    be returned, but not `model.feature1.layer2`.
+    此外，只能获取直接赋值给模型的子模块（如model.layer1），
+    不能获取更深层次的子模块（如model.layer1.layer2）。
 
-    Arguments:
-        model (nn.Module): model on which we will extract the features
-        return_layers (Dict[name, new_name]): a dict containing the names
-            of the modules for which the activations will be returned as
-            the key of the dict, and the value of the dict is the name
-            of the returned activation (which the user can specify).
+    参数说明:
+        model (nn.Module): 需要提取特征的模型
+        return_layers (Dict[name, new_name]): 一个字典，key为需要返回的模块名，
+            value为返回结果中的新名字（用户可自定义）
 
-    Examples::
+    示例::
 
         >>> m = torchvision.models.resnet18(pretrained=True)
-        >>> # extract layer1 and layer3, giving as names `feat1` and feat2`
+        >>> # 提取layer1和layer3，分别命名为'feat1'和'feat2'
         >>> new_m = torchvision.models._utils.IntermediateLayerGetter(m,
         >>>     {'layer1': 'feat1', 'layer3': 'feat2'})
         >>> out = new_m(torch.rand(1, 3, 224, 224))
@@ -78,12 +75,14 @@ class IntermediateLayerGetter(nn.ModuleDict):
         >>>      ('feat2', torch.Size([1, 256, 14, 14]))]
     """
     def __init__(self, model, return_layers):
+        # 检查return_layers中的层名是否都在模型的直接子模块中
         if not set(return_layers).issubset([name for name, _ in model.named_children()]):
             raise ValueError("return_layers are not present in model")
 
         orig_return_layers = return_layers
         return_layers = {k: v for k, v in return_layers.items()}
         layers = OrderedDict()
+        # 只保留需要的子模块，并按顺序注册
         for name, module in model.named_children():
             layers[name] = module
             if name in return_layers:
@@ -96,6 +95,7 @@ class IntermediateLayerGetter(nn.ModuleDict):
 
     def forward(self, x):
         out = OrderedDict()
+        # 依次前向传播，并收集指定层的输出
         for name, module in self.named_children():
             x = module(x)
             if name in self.return_layers:

@@ -10,12 +10,12 @@ from multiprocessing import Process
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_root', default='', help='Directory to save dataset')
-parser.add_argument('--saveroot', default='', help='Directory to save score map results')
-parser.add_argument('--save_visu', action='store_true', help='Whether to save visualizations')
-parser.add_argument('--camera', default='realsense', help='Camera to use [default: realsense]')
-parser.add_argument('--sigma', type=int, default=4, help='Gaussian Kernel sigma')
-parser.add_argument('--pool_size', type=int, default=10, help='How many threads to use')
+parser.add_argument('--data_root', default='', help='数据集根目录')
+parser.add_argument('--saveroot', default='', help='保存score map结果的目录')
+parser.add_argument('--save_visu', action='store_true', help='是否保存可视化结果')
+parser.add_argument('--camera', default='realsense', help='使用的相机类型 [默认: realsense]')
+parser.add_argument('--sigma', type=int, default=4, help='高斯核sigma')
+parser.add_argument('--pool_size', type=int, default=10, help='并行处理进程数')
 FLAGS = parser.parse_args()
 
 
@@ -27,6 +27,7 @@ colli_root = os.path.join(DATASET_ROOT, 'suction_collision_label')
 
 class CameraInfo():
     def __init__(self, width, height, fx, fy, cx, cy, scale):
+        # 相机内参信息
         self.width = width
         self.height = height
         self.fx = fx
@@ -36,6 +37,7 @@ class CameraInfo():
         self.scale = scale
 
 def parse_posevector(posevector):
+    # 将位姿向量（含欧拉角）转换为4x4位姿矩阵
     mat = np.zeros([4,4],dtype=np.float32)
     alpha, beta, gamma = posevector[4:7]
     alpha = alpha / 180.0 * np.pi
@@ -48,6 +50,7 @@ def parse_posevector(posevector):
     return obj_idx, mat
 
 def transform_points(points, trans):
+    # 对点云进行齐次变换
     ones = np.ones([points.shape[0],1], dtype=points.dtype)
     points_ = np.concatenate([points, ones], axis=-1)
     points_ = np.matmul(trans, points_.T).T
@@ -56,7 +59,7 @@ def transform_points(points, trans):
 
 def generate_scene_model(dataset_root, scene_name, anno_idx, return_poses=False, 
                             align=False, camera='realsense'):
-
+    # 加载指定场景和帧的所有物体模型，并返回物体ID和位姿矩阵列表
     print('Scene {}, {}'.format(scene_name, camera))
     scene_reader = xmlReader(os.path.join(dataset_root, 'scenes', scene_name, camera, 'annotations', '%04d.xml'%anno_idx))
     posevectors = scene_reader.getposevectorlist()
@@ -76,6 +79,7 @@ def generate_scene_model(dataset_root, scene_name, anno_idx, return_poses=False,
 
 
 def create_point_cloud_from_depth_image(depth, camera, organized=True):
+    # 根据深度图和相机内参生成点云
     assert(depth.shape[0] == camera.height and depth.shape[1] == camera.width)
     xmap = np.arange(camera.width)
     ymap = np.arange(camera.height)
@@ -90,6 +94,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
 
 
 def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
+    # 将三维点投影到像素平面，返回像素坐标和深度
     meta_path = os.path.join(scenedir.format('%04d'%scene_idx, camera), 'meta', '%04d.mat'%(anno_idx))
     meta = scio.loadmat(meta_path)
     
@@ -109,6 +114,7 @@ def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
 
 
 def get_model_grasps(datapath):
+    # 读取模型的抓取点、法向、分数和碰撞信息
     dump = np.load(datapath)
     points = dump['points']
     normals = dump['normals']
@@ -117,6 +123,7 @@ def get_model_grasps(datapath):
     return points, normals, scores, collision
 
 def gaussian_kernel(kernel_size, sigma):
+    # 生成高斯核
     kernel = np.zeros((kernel_size, kernel_size))
     center = kernel_size // 2
     
@@ -132,45 +139,49 @@ def gaussian_kernel(kernel_size, sigma):
     return kernel.astype(np.float32)
 
 def uniform_kernel(kernel_size):
+    # 生成均值卷积核
     kernel = np.ones((kernel_size, kernel_size), dtype=np.float32)
     kernel = kernel / kernel_size**2
 
     return kernel
 
 def drawGaussian(img, pt, score, sigma=1):
-    """Draw 2d gaussian on input image.
-    Parameters
+    """
+    在输入图像上绘制二维高斯分布
+    参数说明
     ----------
     img: torch.Tensor
-        A tensor with shape: `(3, H, W)`.
+        输入图像，形状为 (H, W)。
     pt: list or tuple
-        A point: (x, y).
+        点坐标 (x, y)。
+    score: float
+        高斯分布的强度（权重）。
     sigma: int
-        Sigma of gaussian distribution.
-    Returns
+        高斯分布的标准差。
+    返回
     -------
     torch.Tensor
-        A tensor with shape: `(3, H, W)`.
+        形状为 (H, W) 的张量。
     """
     tmp_img = np.zeros([img.shape[0], img.shape[1]], dtype=np.float32)
     tmpSize = 3 * sigma
-    # Check that any part of the gaussian is in-bounds
+    # 检查高斯分布是否在图像范围内
     ul = [int(pt[0] - tmpSize), int(pt[1] - tmpSize)]
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
-        # If not, just return the image as is
+        # 如果不在范围内，直接返回原图
         return img
 
-    # Generate gaussian
+    # 生成高斯分布
     size = 2 * tmpSize + 1
     x = np.arange(0, size, 1, float)
     y = x[:, np.newaxis]
     x0 = y0 = size // 2
-    # Usable gaussian range
+    # 有效高斯区域
     g_x = max(0, -ul[0]), min(br[0], img.shape[1]) - ul[0]
     g_y = max(0, -ul[1]), min(br[1], img.shape[0]) - ul[1]
-    # Image range
+    # 图像区域
     img_x = max(0, ul[0]), min(br[0], img.shape[1])
     img_y = max(0, ul[1]), min(br[1], img.shape[0])
 
@@ -183,6 +194,7 @@ def drawGaussian(img, pt, score, sigma=1):
     return img
 
 def score_mapping(scene_idx, camera):
+    # 针对指定scene和相机，生成每一帧的score map并保存
     if not os.path.exists(colli_root+'/{:04d}_collision.npz'.format(scene_idx)):
         print('Missing ' + colli_root+'/{:04d}_collision.npz'.format(scene_idx))
         return
@@ -270,7 +282,7 @@ def score_mapping(scene_idx, camera):
 
 
 if __name__ == "__main__":
-    
+    # 主程序入口，支持多进程并行处理多个scene
     align = True
     camera = FLAGS.camera   
     
@@ -299,4 +311,4 @@ if __name__ == "__main__":
             if not p.is_alive():
                 pool.pop(idx)
                 break
-    
+

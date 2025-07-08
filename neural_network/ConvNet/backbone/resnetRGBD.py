@@ -8,6 +8,7 @@ __all__ = ['ResNetRGBD', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'wide_resnet50_2', 'wide_resnet101_2']
 
 
+# 预训练模型的下载地址
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
@@ -22,17 +23,30 @@ model_urls = {
 
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
-    """3x3 convolution with padding"""
+    """3x3卷积，带padding
+    参数说明：
+    - in_planes: 输入通道数
+    - out_planes: 输出通道数
+    - stride: 步长
+    - groups: 分组卷积数
+    - dilation: 空洞卷积参数
+    """
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=dilation, groups=groups, bias=False, dilation=dilation)
 
 
 def conv1x1(in_planes, out_planes, stride=1):
-    """1x1 convolution"""
+    """1x1卷积
+    参数说明：
+    - in_planes: 输入通道数
+    - out_planes: 输出通道数
+    - stride: 步长
+    """
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
 class BasicBlock(nn.Module):
+    # 基本残差块，适用于ResNet-18/34
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
@@ -41,10 +55,10 @@ class BasicBlock(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         if groups != 1 or base_width != 64:
-            raise ValueError('BasicBlock only supports groups=1 and base_width=64')
+            raise ValueError('BasicBlock 只支持 groups=1 且 base_width=64')
         if dilation > 1:
-            raise NotImplementedError("Dilation > 1 not supported in BasicBlock")
-        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+            raise NotImplementedError("BasicBlock 不支持 dilation > 1")
+        # 当stride不为1时，conv1和downsample都会对输入进行下采样
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = norm_layer(planes)
         self.relu = nn.ReLU(inplace=True)
@@ -54,7 +68,7 @@ class BasicBlock(nn.Module):
         self.stride = stride
 
     def forward(self, x):
-        identity = x
+        identity = x  # 残差连接
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -64,7 +78,7 @@ class BasicBlock(nn.Module):
         out = self.bn2(out)
 
         if self.downsample is not None:
-            identity = self.downsample(x)
+            identity = self.downsample(x)  # 下采样以匹配维度
 
         out += identity
         out = self.relu(out)
@@ -73,6 +87,7 @@ class BasicBlock(nn.Module):
 
 
 class Bottleneck(nn.Module):
+    # 瓶颈残差块，适用于ResNet-50/101/152等
     expansion = 4
 
     def __init__(self, inplanes, planes, stride=1, downsample=None, groups=1,
@@ -81,7 +96,7 @@ class Bottleneck(nn.Module):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         width = int(planes * (base_width / 64.)) * groups
-        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+        # 当stride不为1时，conv2和downsample都会对输入进行下采样
         self.conv1 = conv1x1(inplanes, width)
         self.bn1 = norm_layer(width)
         self.conv2 = conv3x3(width, width, stride, groups, dilation)
@@ -93,7 +108,7 @@ class Bottleneck(nn.Module):
         self.stride = stride
 
     def forward(self, x):
-        identity = x
+        identity = x  # 残差连接
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -107,7 +122,7 @@ class Bottleneck(nn.Module):
         out = self.bn3(out)
 
         if self.downsample is not None:
-            identity = self.downsample(x)
+            identity = self.downsample(x)  # 下采样以匹配维度
 
         out += identity
         out = self.relu(out)
@@ -116,6 +131,9 @@ class Bottleneck(nn.Module):
 
 
 class ResNetRGBD(nn.Module):
+    """
+    支持RGBD输入的ResNet网络结构
+    """
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
@@ -128,16 +146,13 @@ class ResNetRGBD(nn.Module):
         self.inplanes = 64
         self.dilation = 1
         if replace_stride_with_dilation is None:
-            # each element in the tuple indicates if we should replace
-            # the 2x2 stride with a dilated convolution instead
+            # 每个元素表示是否用空洞卷积替换2x2步长
             replace_stride_with_dilation = [False, False, False]
         if len(replace_stride_with_dilation) != 3:
-            raise ValueError("replace_stride_with_dilation should be None "
-                             "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
+            raise ValueError("replace_stride_with_dilation 应为None或3元素元组")
         self.groups = groups
         self.base_width = width_per_group
-        # self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
-        #                        bias=False)
+        # 输入通道为4，适用于RGBD
         self.conv1 = nn.Conv2d(4, self.inplanes, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = norm_layer(self.inplanes)
@@ -153,6 +168,7 @@ class ResNetRGBD(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        # 初始化卷积和归一化层参数
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -160,9 +176,8 @@ class ResNetRGBD(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # 对每个残差分支的最后一个BN层进行零初始化，使残差分支初始为零，提升模型性能
+        # 参考：https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck):
@@ -171,6 +186,7 @@ class ResNetRGBD(nn.Module):
                     nn.init.constant_(m.bn2.weight, 0)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+        # 构建残差层
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -195,6 +211,7 @@ class ResNetRGBD(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # 前向传播
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -213,25 +230,25 @@ class ResNetRGBD(nn.Module):
 
 
 def _resnetRGBD(arch, block, layers, pretrained, progress, **kwargs):
+    # 构建RGBD版本的ResNet，并加载预训练权重（除conv1外）
     model = ResNetRGBD(block, layers, **kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
-        # w_dict = checkpoint['model_state']
         model_dict = model.state_dict()
         model_keys = model_dict.keys()
         state_keys = state_dict.keys()
         for key in model_keys:
             if key in state_keys:
-                # print(key)
+                # 跳过conv1.weight，因为输入通道不同
                 if key == 'conv1.weight':
                     continue
                 model_dict[key] = state_dict[key]
         model.load_state_dict(model_dict, strict=True)
-        # model.load_state_dict(state_dict)
     return model
 
 class ResNet(nn.Module):
+    # 标准ResNet网络结构，支持多种深度
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
@@ -244,12 +261,10 @@ class ResNet(nn.Module):
         self.inplanes = 64
         self.dilation = 1
         if replace_stride_with_dilation is None:
-            # each element in the tuple indicates if we should replace
-            # the 2x2 stride with a dilated convolution instead
+            # 每个元素表示是否用空洞卷积替换2x2步长
             replace_stride_with_dilation = [False, False, False]
         if len(replace_stride_with_dilation) != 3:
-            raise ValueError("replace_stride_with_dilation should be None "
-                             "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
+            raise ValueError("replace_stride_with_dilation 应为None或3元素元组")
         self.groups = groups
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=2, padding=3,
@@ -269,6 +284,7 @@ class ResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        # 初始化卷积和归一化层参数
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -276,9 +292,8 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        # 对每个残差分支的最后一个BN层进行零初始化，使残差分支初始为零，提升模型性能
+        # 参考：https://arxiv.org/abs/1706.02677
         if zero_init_residual:
             for m in self.modules():
                 if isinstance(m, Bottleneck):
@@ -287,6 +302,7 @@ class ResNet(nn.Module):
                     nn.init.constant_(m.bn2.weight, 0)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+        # 构建残差层
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -311,6 +327,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # 前向传播
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -329,92 +346,88 @@ class ResNet(nn.Module):
 
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
+    # 构建标准ResNet，并加载预训练权重
     model = ResNet(block, layers, **kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
-        # w_dict = checkpoint['model_state']
         model_dict = model.state_dict()
         model_keys = model_dict.keys()
         state_keys = state_dict.keys()
         for key in model_keys:
             if key in state_keys:
-                # print(key)
-                # if key == 'conv1.weight':
-                #     continue
                 model_dict[key] = state_dict[key]
         model.load_state_dict(model_dict, strict=True)
-        # model.load_state_dict(state_dict)
     return model
 
 
 def resnet18(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-18 model from
+    r"""ResNet-18模型，来自
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     return _resnetRGBD('resnet18', BasicBlock, [2, 2, 2, 2], pretrained, progress,
                    **kwargs)
 
 
 def resnet34(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-34 model from
+    r"""ResNet-34模型，来自
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     return _resnetRGBD('resnet34', BasicBlock, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)
 
 
 def resnet50(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-50 model from
+    r"""ResNet-50模型，来自
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     return _resnetRGBD('resnet50', Bottleneck, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)
 
 
 def resnet101(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-101 model from
+    r"""ResNet-101模型，来自
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     return _resnetRGBD('resnet101', Bottleneck, [3, 4, 23, 3], pretrained, progress,
                    **kwargs)
 
 
 def resnet152(pretrained=False, progress=True, **kwargs):
-    r"""ResNet-152 model from
+    r"""ResNet-152模型，来自
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     return _resnetRGBD('resnet152', Bottleneck, [3, 8, 36, 3], pretrained, progress,
                    **kwargs)
 
 
 def resnext50_32x4d(pretrained=False, progress=True, **kwargs):
-    r"""ResNeXt-50 32x4d model from
+    r"""ResNeXt-50 32x4d模型，来自
     `"Aggregated Residual Transformation for Deep Neural Networks" <https://arxiv.org/pdf/1611.05431.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     kwargs['groups'] = 32
     kwargs['width_per_group'] = 4
@@ -423,12 +436,12 @@ def resnext50_32x4d(pretrained=False, progress=True, **kwargs):
 
 
 def resnext101_32x8d(pretrained=False, progress=True, **kwargs):
-    r"""ResNeXt-101 32x8d model from
+    r"""ResNeXt-101 32x8d模型，来自
     `"Aggregated Residual Transformation for Deep Neural Networks" <https://arxiv.org/pdf/1611.05431.pdf>`_
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     kwargs['groups'] = 32
     kwargs['width_per_group'] = 8
@@ -437,17 +450,16 @@ def resnext101_32x8d(pretrained=False, progress=True, **kwargs):
 
 
 def wide_resnet50_2(pretrained=False, progress=True, **kwargs):
-    r"""Wide ResNet-50-2 model from
+    r"""Wide ResNet-50-2模型，来自
     `"Wide Residual Networks" <https://arxiv.org/pdf/1605.07146.pdf>`_
 
-    The model is the same as ResNet except for the bottleneck number of channels
-    which is twice larger in every block. The number of channels in outer 1x1
-    convolutions is the same, e.g. last block in ResNet-50 has 2048-512-2048
-    channels, and in Wide ResNet-50-2 has 2048-1024-2048.
+    该模型与标准ResNet结构相同，但每个瓶颈块的通道数加倍。
+    外部1x1卷积的通道数保持一致，例如ResNet-50最后一块为2048-512-2048，
+    Wide ResNet-50-2为2048-1024-2048。
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     kwargs['width_per_group'] = 64 * 2
     return _resnetRGBD('wide_resnet50_2', Bottleneck, [3, 4, 6, 3],
@@ -455,17 +467,16 @@ def wide_resnet50_2(pretrained=False, progress=True, **kwargs):
 
 
 def wide_resnet101_2(pretrained=False, progress=True, **kwargs):
-    r"""Wide ResNet-101-2 model from
+    r"""Wide ResNet-101-2模型，来自
     `"Wide Residual Networks" <https://arxiv.org/pdf/1605.07146.pdf>`_
 
-    The model is the same as ResNet except for the bottleneck number of channels
-    which is twice larger in every block. The number of channels in outer 1x1
-    convolutions is the same, e.g. last block in ResNet-50 has 2048-512-2048
-    channels, and in Wide ResNet-50-2 has 2048-1024-2048.
+    该模型与标准ResNet结构相同，但每个瓶颈块的通道数加倍。
+    外部1x1卷积的通道数保持一致，例如ResNet-50最后一块为2048-512-2048，
+    Wide ResNet-50-2为2048-1024-2048。
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-        progress (bool): If True, displays a progress bar of the download to stderr
+    参数说明:
+        pretrained (bool): 若为True，则返回在ImageNet上预训练的模型
+        progress (bool): 若为True，则显示下载进度条
     """
     kwargs['width_per_group'] = 64 * 2
     return _resnetRGBD('wide_resnet101_2', Bottleneck, [3, 4, 23, 3],
