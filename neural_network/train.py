@@ -82,6 +82,28 @@ TRAIN_DATALOADER = DataLoader(TRAIN_DATASET, batch_size=BATCH_SIZE, shuffle=True
 print(len(TRAIN_DATALOADER))
 
 # 模型选择映射表
+'''
+1. 主干网络类型
+    ResNet50/ResNet101: 经典的残差网络，层数不同（50层/101层），ResNet101更深，表达能力更强，但计算量更大。
+    MobileNet: 轻量级网络，参数量和计算量都比ResNet小，适合对速度和资源有要求的场景。
+2. 网络结构
+    deeplabv3: DeepLabV3 结构，适合语义分割，特征提取能力强。
+    deeplabv3plus: DeepLabV3+，是在DeepLabV3基础上增加了解码器模块，分割边界更精细，效果通常更好。
+    convnet_resnet101: 你项目自定义的网络，主干是ResNet101，通常用于特定任务（如吸取点检测）。
+    deeplabv3plus_resnet101_depth: 可能是支持深度输入的DeepLabV3+，适合RGBD等多模态输入。
+3. 选型建议
+    追求精度，显存和速度不是瓶颈：
+    推荐 deeplabv3plus_resnet101 或 deeplabv3plus_resnet101_depth（如果你有深度图）。
+
+    追求速度或设备资源有限：
+    推荐 deeplabv3plus_mobilenet 或 deeplabv3_mobilenet。
+
+    想要平衡速度和精度：
+    推荐 deeplabv3plus_resnet50 或 deeplabv3_resnet50。
+
+    你的任务是吸取点检测且有自定义网络：
+    可以尝试 convnet_resnet101。
+'''
 model_map = {
         'deeplabv3_resnet50': network.deeplabv3_resnet50,
         'deeplabv3plus_resnet50': network.deeplabv3plus_resnet50,

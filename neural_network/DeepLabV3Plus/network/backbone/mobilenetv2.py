@@ -6,7 +6,7 @@ torchvison_version_low = int(torch.__version__.split('.')[1])
 if torchvison_version_high == 0 and torchvison_version_low < 13:
     from torchvision.models.utils import load_state_dict_from_url
 else:
-    from torchvision.models import load_state_dict_from_url
+    from torch.hub import load_state_dict_from_url
 import torch.nn.functional as F
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
