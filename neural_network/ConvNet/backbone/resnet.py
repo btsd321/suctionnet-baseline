@@ -1,6 +1,12 @@
 import torch
 import torch.nn as nn
-from torchvision.models.utils import load_state_dict_from_url
+#判断torchvision版本
+torchvison_version_high = int(torch.__version__.split('.')[0])
+torchvison_version_low = int(torch.__version__.split('.')[1])
+if torchvison_version_high == 0 and torchvison_version_low < 13:
+    from torchvision.models.utils import load_state_dict_from_url
+else:
+    from torchvision.models import load_state_dict_from_url
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',

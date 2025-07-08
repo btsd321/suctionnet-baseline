@@ -9,3 +9,4 @@ visdom
 open3d
 multiprocess
 opencv-python
+pcl

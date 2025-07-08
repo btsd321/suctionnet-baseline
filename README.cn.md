@@ -22,7 +22,7 @@
 cd neural_network
 ```
 
-生成密封标签的二维映射，请运行如下命令：
+生成吸取分数热力图，请运行如下命令：
 
 ```
 python score_mapping.py \

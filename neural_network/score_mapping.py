@@ -1,3 +1,4 @@
+# 为SuctionNet生成score map(吸取分数热力图)，支持多线程加速
 import os
 import numpy as np
 from PIL import Image
