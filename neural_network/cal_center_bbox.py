@@ -156,7 +156,7 @@ def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
     x = points[:, 0] / points[:, 2] * fx + cx
     y = points[:, 1] / points[:, 2] * fy + cy
     # return x,y,depth
-    return x.astype(np.int32), y.astype(np.int32), depth.astype(np.int32)
+    return x.astype(np.int32)[0], y.astype(np.int32)[0], depth.astype(np.int32)[0]
 
 
 def get_model_grasps(datapath):
@@ -216,10 +216,10 @@ def get_center_bbox(scene_idx, camera='realsense'):
             max_x = valid_x.max()
             max_y = valid_y.max()
 
-            assert center_x[0] > min_x and center_x[0] < max_x, 'center x 超出bbox范围'
-            assert center_y[0] > min_y and center_y[0] < max_y, 'center y 超出bbox范围'
+            assert center_x > min_x and center_x < max_x, 'center x 超出bbox范围'
+            assert center_y > min_y and center_y < max_y, 'center y 超出bbox范围'
 
-            if not ((center_y[0] >= 0 ) & (center_y[0] < 720) & (center_x[0] >= 0 ) & (center_x[0] < 1280)):
+            if not ((center_y >= 0 ) & (center_y < 720) & (center_x >= 0 ) & (center_x < 1280)):
                 mask_list_single.append(0)
             else:
                 mask_list_single.append(1)

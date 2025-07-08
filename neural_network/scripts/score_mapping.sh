@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # 获取上一级目录
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 
-python $PARENT_DIR/neural_network/score_mapping.py \
+python $PARENT_DIR/score_mapping.py \
 --data_root /home/lixinlong/Project/pose_detect_train/Data/GraspNet \
 --saveroot /home/lixinlong/Project/pose_detect_train/Data/GraspNet/additional_label \
 --camera realsense \
