@@ -26,12 +26,14 @@ cd neural_network
 
 ```
 python score_mapping.py \
---dataset_root /path/to/SuctionNet/dataset \
---saveroot /path/to/save/additional/labels \
---camera realsense \ # 选择 kinect 或 realsense 相机
---sigma 4 \	# 生成二维高斯核的 sigma
---pool_size 10 \ # 使用的 CPU 线程数
---save_visu # 是否保存可视化结果
+--data_root /home/lixinlong/Project/pose_detect_train/Data/GraspNet \
+--saveroot /home/lixinlong/Project/pose_detect_train/Data/GraspNet/additional_label \
+--camera realsense \
+--sigma 4 \
+--pool_size 10 \
+--start_scene_idx 0 \
+--end_scene_idx 99 \
+--save_visu
 ```
 
 或者修改 [scripts/score_mapping.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/score_mapping.sh) 并运行 `sh scripts/score_mapping.sh`。
@@ -40,11 +42,13 @@ python score_mapping.py \
 
 ```
 python cal_center_bbox.py \
---dataset_root /path/to/SuctionNet/dataset \
---saveroot /path/to/save/additional/labels \
---camera realsense \ # 选择 kinect 或 realsense 相机
---pool_size 10 \ # 使用的 CPU 线程数
---save_visu # 是否保存可视化结果
+--data_root /home/lixinlong/Project/pose_detect_train/Data/GraspNet \
+--saveroot /home/lixinlong/Project/pose_detect_train/Data/GraspNet/additional_label \
+--camera realsense \
+--pool_size 10 \
+--start_scene_idx 00 \
+--end_scene_idx 99 \
+--save_visu
 ```
 
 或者修改 [scripts/cal_center_bbox.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/cal_center_bbox.sh) 并运行 `sh scripts/cal_center_bbox.sh`。

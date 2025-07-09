@@ -348,10 +348,12 @@ def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
 def inference(scene_idx):
     # 对指定scene的所有帧进行推理
     for anno_idx in range(256):
-
+        # RGB图像
         rgb_file = os.path.join(dataset_root, 'scenes/scene_{:04d}/{}/rgb/{:04d}.png'.format(scene_idx, camera, anno_idx))
+        # 深度图像
         depth_file = os.path.join(dataset_root, 'scenes/scene_{:04d}/{}/depth/{:04d}.png'.format(scene_idx, camera, anno_idx))
         # segmask_file = os.path.join(dataset_root, 'scenes/scene_{:04d}/kinect/label/{:04d}.png'.format(scene_idx, anno_idx))
+        # 相机内参信息文件
         meta_file = os.path.join(dataset_root, 'scenes/scene_{:04d}/{}/meta/{:04d}.mat'.format(scene_idx, camera, anno_idx))
 
         inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx)

@@ -20,7 +20,7 @@ parser.add_argument('--camera', default='realsense', help='相机名称，kinect
 parser.add_argument('--log_dir', default='/DATA2/Benchmark/suction/models/log_kinectV6', help='模型日志与权重保存目录 [默认: log]')
 parser.add_argument('--data_root', default='/DATA2/Benchmark/graspnet', help='数据集根目录 [默认: log]')
 parser.add_argument('--label_root', default='/ssd1/hanwen/grasping/graspnet_label', help='标签根目录 [默认: log]')
-parser.add_argument('--max_epoch', type=int, default=100, help='训练轮数 [默认: 180]')
+parser.add_argument('--max_epoch', type=int, default=100, help='训练轮数 [默认: 100]')
 parser.add_argument('--batch_size', type=int, default=24, help='训练时的批次大小 [默认: 8]')
 parser.add_argument('--learning_rate', type=float, default=0.001, help='初始学习率 [默认: 0.001]')
 parser.add_argument('--weight_decay', type=float, default=0.0005, help='优化器L2正则 [默认: 0]')
