@@ -9,6 +9,7 @@ from suctionnet.suctionnet_dataset import SuctionNetDataset
 import ConvNet
 import DeepLabV3Plus.network as network
 from utils.avgmeter import AverageMeter
+import time
 
 # 命令行参数解析
 parser = argparse.ArgumentParser()
@@ -225,13 +226,15 @@ def train_one_epoch():
 # 总训练流程
 def train():
     global EPOCH_CNT
+    # 记录起始时间
+    start_time = time.time()
 
     for epoch in range(EPOCH_CNT, MAX_EPOCH):
         EPOCH_CNT = epoch
         log_string('**** 训练 EPOCH %03d ****' % (epoch))
         log_string('当前学习率: %f'%(get_current_lr(epoch)))
         train_one_epoch()
-
+        
         if EPOCH_CNT % 10 == 0: # 每10个epoch保存一次模型
 
             save_dict = {'epoch': epoch+1, # 训练完一个epoch后，下次从epoch+1开始
@@ -241,6 +244,10 @@ def train():
             except:
                 save_dict['model_state_dict'] = net.state_dict()
             torch.save(save_dict, os.path.join(LOG_DIR, 'checkpoint_'+str(epoch)))
+        
+        end_time = time.time()
+        log_string('Epoch %d 训练完毕, 用时 %d s' % (epoch, end_time - start_time))
+        start_time = end_time
             
 
 if __name__ == "__main__":
