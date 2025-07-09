@@ -11,6 +11,6 @@ python $PARENT_DIR/score_mapping.py \
 --camera realsense \
 --sigma 4 \
 --pool_size 10 \
---start_scene_idx 90 \
+--start_scene_idx 0 \
 --end_scene_idx 99 \
 --save_visu

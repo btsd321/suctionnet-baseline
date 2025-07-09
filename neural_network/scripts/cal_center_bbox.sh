@@ -7,4 +7,6 @@ python $PARENT_DIR/cal_center_bbox.py \
 --saveroot /home/lixinlong/Project/pose_detect_train/Data/GraspNet/additional_label \
 --camera realsense \
 --pool_size 10 \
+--start_scene_idx 10 \
+--end_scene_idx 99 \
 --save_visu

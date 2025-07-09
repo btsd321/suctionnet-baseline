@@ -16,6 +16,8 @@ parser.add_argument('--saveroot', default='/DATA2/Benchmark/suction/center_bbox_
 parser.add_argument('--save_visu', action='store_true', help='是否保存可视化结果')
 parser.add_argument('--camera', default='realsense', help='使用的相机类型 [默认: realsense]')
 parser.add_argument('--pool_size', type=int, default=10, help='并行处理的进程数')
+parser.add_argument('--start_scene_idx', type=int, default=0, help='开始处理场景的索引')
+parser.add_argument('--end_scene_idx', type=int, default=99, help='结束处理场景的索引')
 FLAGS = parser.parse_args()
 
 
@@ -24,6 +26,8 @@ scenedir = FLAGS.data_root + '/scenes/scene_{}/{}'
 bbox_saveroot = os.path.join(FLAGS.saveroot, 'bbox_anno')
 center_saveroot = os.path.join(FLAGS.saveroot, 'center_anno')
 visu_saveroot = os.path.join(FLAGS.saveroot, 'visu')
+start_scene_idx = FLAGS.start_scene_idx
+end_scene_idx = FLAGS.end_scene_idx
 # mask_saveroot = ''
 
 
@@ -181,76 +185,84 @@ def get_center_bbox(scene_idx, camera='realsense'):
     mask_list_scene = []
     
     for anno_idx in range(256):
-        # camera_pose = camera_poses[anno_idx]
-        # # print('camera pose')
-        # # print(camera_pose)
-        # if align:
-        #     align_mat = np.load(os.path.join(DATASET_ROOT, 'scenes', 'scene_%04d'%scene_idx, camera, 'cam0_wrt_table.npy'))
-        #     camera_pose = align_mat.dot(camera_pose)
+        try:
+            print(f"Start processing scene {scene_idx}, anno {anno_idx}")
+            
+            # camera_pose = camera_poses[anno_idx]
+            # # print('camera pose')
+            # # print(camera_pose)
+            # if align:
+            #     align_mat = np.load(os.path.join(DATASET_ROOT, 'scenes', 'scene_%04d'%scene_idx, camera, 'cam0_wrt_table.npy'))
+            #     camera_pose = align_mat.dot(camera_pose)
+            
+            rgb_dir = os.path.join(scenedir.format('%04d'%scene_idx, camera), 'rgb', '%04d'%anno_idx+'.png')
+            rgb_image = np.array(Image.open(rgb_dir), dtype=np.float32)
+
+            model_list, _, _ = generate_scene_model(DATASET_ROOT, 'scene_%04d'%scene_idx, anno_idx, return_poses=True, camera=camera)
+
+            bbox_list_single = []
+            center_list_single = []
+            mask_list_single = []
+
+            for i, model in enumerate(model_list):
+                
+                points = np.array(model.points)
+                # print('points:', points.shape)
+                center = np.mean(points, keepdims=True, axis=0)
+
+                x, y, _ = points2depth(points, scene_idx, camera)
+                # print('center:', center.shape)
+                center_array_x, center_array_y, _ = points2depth(center, scene_idx, camera)
+                center_x = int(center_array_x[0])
+                center_y = int(center_array_y[0])
+                valid_y = y
+                valid_x = x
+
+                min_x = valid_x.min()
+                min_y = valid_y.min()
+                
+                max_x = valid_x.max()
+                max_y = valid_y.max()
+
+                assert center_x > min_x and center_x < max_x, 'center x 超出bbox范围'
+                assert center_y > min_y and center_y < max_y, 'center y 超出bbox范围'
+
+                if not ((center_y >= 0 ) & (center_y < 720) & (center_x >= 0 ) & (center_x < 1280)):
+                    mask_list_single.append(0)
+                else:
+                    mask_list_single.append(1)
+
+                bbox = np.array([min_y, min_x, max_y, max_x], dtype=np.int32)
+                bbox_list_single.append(bbox[np.newaxis, :])
+
+                center_pix = np.concatenate([center_array_y, center_array_x], axis=0)[np.newaxis, :]
+                # print('center_pix:', center_pix.shape)
+                center_list_single.append(center_pix)
+                if scene_idx < 10 and FLAGS.save_visu:
+                    rgb_image[max(min_y, 0): min(max_y, 720), max(min_x, 0): min(max_x, 1280), :] *= 0.5
+                    cv2.circle(rgb_image, (center_x, center_y), 10, (255,0,0), -1)
+
+            bbox_single = np.concatenate(bbox_list_single, axis=0)[np.newaxis, :, :]                
+            mask_single = np.array(mask_list_single, dtype=bool)[np.newaxis, :]
+            bbox_list_scene.append(bbox_single)
+            mask_list_scene.append(mask_single)
+            # print('concatenate:', np.concatenate(center_list_single, axis=0).shape)
+            center_single = np.concatenate(center_list_single, axis=0)[np.newaxis, :, :]
+            center_list_scene.append(center_single)
+
+            if anno_idx < 10 and FLAGS.save_visu:
+                if (mask_single == 0).sum() == 0:
+                    rgb_image = rgb_image.astype(np.uint8)
+                    im = Image.fromarray(rgb_image)
+                    visu_dir = os.path.join(visu_saveroot, 'scene_'+str(scene_idx), camera)
+                    os.makedirs(visu_dir, exist_ok=True)
+                    print('Saving:', visu_dir+'/%04d'%anno_idx+'.png')
+                    im.save(visu_dir+'/%04d'%anno_idx+'.png')
+                
+            print(f"Finish processing scene {scene_idx}, anno {anno_idx}")
+        except Exception as e:
+            print(f"Error in scene {scene_idx}, anno {anno_idx}: {e}")
         
-        rgb_dir = os.path.join(scenedir.format('%04d'%scene_idx, camera), 'rgb', '%04d'%anno_idx+'.png')
-        rgb_image = np.array(Image.open(rgb_dir), dtype=np.float32)
-
-        model_list, _, _ = generate_scene_model(DATASET_ROOT, 'scene_%04d'%scene_idx, anno_idx, return_poses=True, camera=camera)
-
-        bbox_list_single = []
-        center_list_single = []
-        mask_list_single = []
-
-        for i, model in enumerate(model_list):
-            
-            points = np.array(model.points)
-            # print('points:', points.shape)
-            center = np.mean(points, keepdims=True, axis=0)
-
-            x, y, _ = points2depth(points, scene_idx, camera)
-            # print('center:', center.shape)
-            center_array_x, center_array_y, _ = points2depth(center, scene_idx, camera)
-            center_x = int(center_array_x[0])
-            center_y = int(center_array_y[0])
-            valid_y = y
-            valid_x = x
-
-            min_x = valid_x.min()
-            min_y = valid_y.min()
-            
-            max_x = valid_x.max()
-            max_y = valid_y.max()
-
-            assert center_x > min_x and center_x < max_x, 'center x 超出bbox范围'
-            assert center_y > min_y and center_y < max_y, 'center y 超出bbox范围'
-
-            if not ((center_y >= 0 ) & (center_y < 720) & (center_x >= 0 ) & (center_x < 1280)):
-                mask_list_single.append(0)
-            else:
-                mask_list_single.append(1)
-
-            bbox = np.array([min_y, min_x, max_y, max_x], dtype=np.int32)
-            bbox_list_single.append(bbox[np.newaxis, :])
-
-            center_pix = np.concatenate([center_array_x, center_array_x], axis=0)[np.newaxis, :]
-            # print('center_pix:', center_pix.shape)
-            center_list_single.append(center_pix)
-            if scene_idx < 10 and FLAGS.save_visu:
-                rgb_image[max(min_y, 0): min(max_y, 720), max(min_x, 0): min(max_x, 1280), :] *= 0.5
-                cv2.circle(rgb_image, (center_array_x, center_array_x), 10, (255,0,0), -1)
-
-        bbox_single = np.concatenate(bbox_list_single, axis=0)[np.newaxis, :, :]                
-        mask_single = np.array(mask_list_single, dtype=bool)[np.newaxis, :]
-        bbox_list_scene.append(bbox_single)
-        mask_list_scene.append(mask_single)
-        # print('concatenate:', np.concatenate(center_list_single, axis=0).shape)
-        center_single = np.concatenate(center_list_single, axis=0)[np.newaxis, :, :]
-        center_list_scene.append(center_single)
-
-        if anno_idx < 10 and FLAGS.save_visu:
-            if (mask_single == 0).sum() == 0:
-                rgb_image = rgb_image.astype(np.uint8)
-                im = Image.fromarray(rgb_image)
-                visu_dir = os.path.join(visu_saveroot, 'scene_'+str(scene_idx), camera)
-                os.makedirs(visu_dir, exist_ok=True)
-                print('Saving:', visu_dir+'/%04d'%anno_idx+'.png')
-                im.save(visu_dir+'/%04d'%anno_idx+'.png')
 
     bbox_scene = np.concatenate(bbox_list_scene, axis=0)
     center_scene = np.concatenate(center_list_scene, axis=0)
@@ -276,7 +288,7 @@ if __name__ == "__main__":
     camera = FLAGS.camera  
 
     scene_list = []
-    for i in range(0, 100):
+    for i in range(start_scene_idx, end_scene_idx + 1):
         scene_list.append(i)
 
     pool_size = FLAGS.pool_size
