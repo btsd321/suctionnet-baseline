@@ -156,7 +156,7 @@ def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
     x = points[:, 0] / points[:, 2] * fx + cx
     y = points[:, 1] / points[:, 2] * fy + cy
     # return x,y,depth
-    return x.astype(np.int32)[0], y.astype(np.int32)[0], depth.astype(np.int32)[0]
+    return x.astype(np.int32), y.astype(np.int32), depth.astype(np.int32)
 
 
 def get_model_grasps(datapath):
@@ -205,8 +205,9 @@ def get_center_bbox(scene_idx, camera='realsense'):
 
             x, y, _ = points2depth(points, scene_idx, camera)
             # print('center:', center.shape)
-            center_x, center_y, _ = points2depth(center, scene_idx, camera)
-
+            center_array_x, center_array_y, _ = points2depth(center, scene_idx, camera)
+            center_x = int(center_array_x[0])
+            center_y = int(center_array_y[0])
             valid_y = y
             valid_x = x
 
@@ -227,12 +228,12 @@ def get_center_bbox(scene_idx, camera='realsense'):
             bbox = np.array([min_y, min_x, max_y, max_x], dtype=np.int32)
             bbox_list_single.append(bbox[np.newaxis, :])
 
-            center_pix = np.concatenate([center_y, center_x], axis=0)[np.newaxis, :]
+            center_pix = np.concatenate([center_array_x, center_array_x], axis=0)[np.newaxis, :]
             # print('center_pix:', center_pix.shape)
             center_list_single.append(center_pix)
             if scene_idx < 10 and FLAGS.save_visu:
                 rgb_image[max(min_y, 0): min(max_y, 720), max(min_x, 0): min(max_x, 1280), :] *= 0.5
-                cv2.circle(rgb_image, (center_x, center_y), 10, (255,0,0), -1)
+                cv2.circle(rgb_image, (center_array_x, center_array_x), 10, (255,0,0), -1)
 
         bbox_single = np.concatenate(bbox_list_single, axis=0)[np.newaxis, :, :]                
         mask_single = np.array(mask_list_single, dtype=bool)[np.newaxis, :]

@@ -17,6 +17,8 @@ parser.add_argument('--save_visu', action='store_true', help='是否保存可视
 parser.add_argument('--camera', default='realsense', help='使用的相机类型 [默认: realsense]')
 parser.add_argument('--sigma', type=int, default=4, help='高斯核sigma')
 parser.add_argument('--pool_size', type=int, default=10, help='并行处理进程数')
+parser.add_argument('--start_scene_idx', type=int, default=0, help='开始处理场景的索引')
+parser.add_argument('--end_scene_idx', type=int, default=99, help='结束处理场景的索引')
 FLAGS = parser.parse_args()
 
 
@@ -25,6 +27,8 @@ scenedir = FLAGS.data_root + '/scenes/scene_{}/{}'
 labeldir = os.path.join(DATASET_ROOT, 'seal_label')
 saveroot = os.path.join(FLAGS.saveroot, 'score_maps')
 colli_root = os.path.join(DATASET_ROOT, 'suction_collision_label')
+start_scene_idx = FLAGS.start_scene_idx
+end_scene_idx = FLAGS.end_scene_idx
 
 class CameraInfo():
     def __init__(self, width, height, fx, fy, cx, cy, scale):
@@ -288,7 +292,7 @@ if __name__ == "__main__":
     camera = FLAGS.camera   
     
     scene_list = []
-    for i in range(0, 100):
+    for i in range(start_scene_idx, end_scene_idx+1):
         scene_list.append(i)
 
     pool_size = FLAGS.pool_size
