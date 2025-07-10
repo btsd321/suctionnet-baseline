@@ -15,8 +15,8 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='deeplabv3plus_resnet101', help='模型文件名 [默认: votenet]')
 parser.add_argument('--checkpoint_path', default=None, help='模型权重路径 [默认: None]')
-parser.add_argument("--num_classes", type=int, default=2)
-parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])
+parser.add_argument("--num_classes", type=int, default=2)# 类别数
+parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])# 输出步长
 parser.add_argument('--camera', default='realsense', help='相机名称，kinect或realsense [默认: realsense]')
 parser.add_argument('--log_dir', default='/DATA2/Benchmark/suction/models/log_kinectV6', help='模型日志与权重保存目录 [默认: log]')
 parser.add_argument('--data_root', default='/DATA2/Benchmark/graspnet', help='数据集根目录 [默认: log]')
