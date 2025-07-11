@@ -7,18 +7,18 @@ import torch.nn as nn
 def _segm_resnetRGBD(name, backbone_name, num_classes, output_stride, pretrained_backbone):
     # 构建基于RGBD输入的ResNet骨干的DeepLab分割模型
     # 参数说明：
-    # name: 模型类型（'deeplabv3plus'或'deeplabv3'）
-    # backbone_name: 主干网络名称（如'resnet50'）
+    # name: 模型类型('deeplabv3plus'或'deeplabv3')
+    # backbone_name: 主干网络名称(如'resnet50')
     # num_classes: 输出类别数
     # output_stride: 主干网络输出特征图的下采样倍数
     # pretrained_backbone: 是否加载预训练主干权重
 
     if output_stride==8:
-        # 输出步长为8时，后两层使用空洞卷积
+        # 输出步长为8时, 后两层使用空洞卷积
         replace_stride_with_dilation=[False, True, True]
         aspp_dilate = [12, 24, 36]
     else:
-        # 默认输出步长为16，仅最后一层使用空洞卷积
+        # 默认输出步长为16, 仅最后一层使用空洞卷积
         replace_stride_with_dilation=[False, False, True]
         aspp_dilate = [6, 12, 18]
 
@@ -69,7 +69,7 @@ def _segm_resnetDepth(name, backbone_name, num_classes, output_stride, pretraine
     return model
 
 def _mysegm_resnet(name, backbone_name, num_classes, output_stride, pretrained_backbone):
-    # 构建双塔结构的ResNet分割模型（如RGB和D分别用两个主干）
+    # 构建双塔结构的ResNet分割模型(如RGB和D分别用两个主干)
     if output_stride==8:
         replace_stride_with_dilation=[False, True, True]
         aspp_dilate = [12, 24, 36]
@@ -130,7 +130,7 @@ def _segm_mobilenet(name, backbone_name, num_classes, output_stride, pretrained_
 
     backbone = mobilenetv2.mobilenet_v2(pretrained=pretrained_backbone, output_stride=output_stride)
     
-    # 重命名特征层，便于后续提取
+    # 重命名特征层, 便于后续提取
     backbone.low_level_features = backbone.features[0:4]
     backbone.high_level_features = backbone.features[4:-1]
     backbone.features = None

@@ -79,7 +79,7 @@ python train.py \
 --batch_size 8
 ```
 
-或者修改 [scripts/deeplabv3plus_train.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_train.sh)、[scripts/deeplabv3plus_train_depth.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_inference_depth.sh)、[scripts/convnet_train.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/convnet_train.sh) 来训练我们的 RGB-D 模型、深度模型和全卷积网络（FCN）模型。
+或者修改 [scripts/deeplabv3plus_train.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_train.sh)、[scripts/deeplabv3plus_train_depth.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_inference_depth.sh)、[scripts/convnet_train.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/convnet_train.sh) 来训练我们的 RGB-D 模型、深度模型和全卷积网络(FCN)模型。
 
 推理时，请使用如下命令：
 
@@ -96,7 +96,7 @@ python inference.py \
 
 或者修改 [scripts/deeplabv3plus_inference.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_inference.sh)、[scripts/deeplabv3plus_inference_depth.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/deeplabv3plus_inference_depth.sh)、[scripts/convnet_inference.sh](https://github.com/graspnet/suctionnet-baseline/blob/master/neural_network/scripts/convnet_inference.sh) 进行推理。
 
-### Normal STD（法向标准差方法）
+### Normal STD(法向标准差方法)
 
 切换到 `normal_std` 目录：
 

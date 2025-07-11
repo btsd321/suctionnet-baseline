@@ -10,7 +10,7 @@ import os
 
 class xmlWriter():
     def __init__(self, topfromreader=None):
-        # 初始化xmlWriter，支持从已有XML结构恢复
+        # 初始化xmlWriter, 支持从已有XML结构恢复
         self.topfromreader = topfromreader
         self.poselist = []
         self.objnamelist = []
@@ -92,7 +92,7 @@ class xmlReader():
         return self.top
 
     def getposevectorlist(self):
-        # 解析XML，返回每个物体的位姿向量 [objectid, x, y, z, alpha, beta, gamma]
+        # 解析XML, 返回每个物体的位姿向量 [objectid, x, y, z, alpha, beta, gamma]
         posevectorlist = []
         for i in range(len(self.top)):
             objectid = int(self.top[i][0].text)
@@ -117,7 +117,7 @@ class xmlReader():
 
 def empty_pose_vector(objectid):
     # 返回一个初始化的空位姿向量 [object id, x, y, z, alpha, beta, gamma]
-    # 其中alpha, beta, gamma为欧拉角（单位：度）
+    # 其中alpha, beta, gamma为欧拉角(单位：度)
     return [objectid, 0.0, 0.0, 0.4, 0.0, 0.0, 0.0]
 
 
@@ -131,7 +131,7 @@ def empty_pose_vector_list(objectidlist):
 
 def getposevectorlist(objectidlist, is_resume, num_frame, frame_number, xml_dir):
     # 获取指定帧的物体位姿向量列表
-    # 若is_resume为False或XML文件不存在，则返回空位姿向量列表
+    # 若is_resume为False或XML文件不存在, 则返回空位姿向量列表
     if not is_resume or (not os.path.exists(os.path.join(xml_dir, '%04d.xml' % num_frame))):
         print('log:create empty pose vector list')
         return empty_pose_vector_list(objectidlist)
@@ -152,7 +152,7 @@ def getposevectorlist(objectidlist, is_resume, num_frame, frame_number, xml_dir)
 
 
 def getframeposevectorlist(objectidlist, is_resume, frame_number, xml_dir):
-    # 获取所有帧的物体位姿向量列表（每帧一个列表）
+    # 获取所有帧的物体位姿向量列表(每帧一个列表)
     frameposevectorlist = []
     for num_frame in range(frame_number):
         if not is_resume or (not os.path.exists(os.path.join(xml_dir,'%04d.xml' % num_frame))):

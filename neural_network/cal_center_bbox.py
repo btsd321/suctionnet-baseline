@@ -51,7 +51,7 @@ def transform_points(points, trans):
     return points_[:,:3]
 
 def transform_normals(points, trans):
-    # 对法向量进行旋转变换（不考虑平移）
+    # 对法向量进行旋转变换(不考虑平移)
     ones = np.ones([points.shape[0],1], dtype=points.dtype)
     points_ = np.concatenate([points, ones], axis=-1)
     trans[:3, 3] = 0
@@ -59,7 +59,7 @@ def transform_normals(points, trans):
     return points_[:,:3]
 
 def parse_posevector(posevector):
-    # 将位姿向量（含欧拉角）转换为4x4位姿矩阵
+    # 将位姿向量(含欧拉角)转换为4x4位姿矩阵
     mat = np.zeros([4,4],dtype=np.float32)
     alpha, beta, gamma = posevector[4:7]
     alpha = alpha / 180.0 * np.pi
@@ -75,7 +75,7 @@ def parse_posevector(posevector):
 
 def generate_scene_model(dataset_root, scene_name, anno_idx, return_poses=False, camera='realsense'):
     """
-    加载指定场景和帧的所有物体模型，并根据位姿变换到场景中
+    加载指定场景和帧的所有物体模型, 并根据位姿变换到场景中
     返回点云列表、物体ID列表和位姿矩阵列表
     """
     # if align:
@@ -130,7 +130,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
 
 
 def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
-    # 将三维点投影到像素平面，返回像素坐标和深度
+    # 将三维点投影到像素平面, 返回像素坐标和深度
     # camera_split = 'data' if camera == 'realsense' else 'data_kinect'
     meta_path = os.path.join(scenedir.format('%04d'%scene_idx, camera), 'meta', '%04d.mat'%(anno_idx))
     meta = scio.loadmat(meta_path)
@@ -284,7 +284,7 @@ def get_center_bbox(scene_idx, camera='realsense'):
 
 
 if __name__ == "__main__":
-    # 主程序入口，支持多进程并行处理多个scene
+    # 主程序入口, 支持多进程并行处理多个scene
     camera = FLAGS.camera  
 
     scene_list = []

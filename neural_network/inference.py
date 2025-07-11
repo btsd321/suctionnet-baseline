@@ -125,7 +125,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
     return cloud
 
 def grid_sample(pred_score_map, down_rate=20, topk=512):
-    # 对预测分数图进行网格采样，返回topk分数及其像素坐标
+    # 对预测分数图进行网格采样, 返回topk分数及其像素坐标
     num_row = pred_score_map.shape[0] // down_rate
     num_col = pred_score_map.shape[1] // down_rate
 
@@ -160,11 +160,11 @@ def drawGaussian(img, pt, score, sigma=1):
     参数说明
     ----------
     img: torch.Tensor
-        输入图像，形状为 (H, W)。
+        输入图像, 形状为 (H, W)。
     pt: list or tuple
         点坐标 (x, y)。
     score: float
-        高斯分布的强度（权重）。
+        高斯分布的强度(权重)。
     sigma: int
         高斯分布的标准差。
     返回
@@ -179,7 +179,7 @@ def drawGaussian(img, pt, score, sigma=1):
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
-        # 如果不在范围内，直接返回原图
+        # 如果不在范围内, 直接返回原图
         return img
 
     # 生成高斯分布
@@ -201,7 +201,7 @@ def drawGaussian(img, pt, score, sigma=1):
     img += tmp_img
 
 def get_suction_from_heatmap(depth_img, heatmap, camera_info):
-    # 从热力图中采样吸取点，返回吸取分数、法向量和三维坐标
+    # 从热力图中采样吸取点, 返回吸取分数、法向量和三维坐标
     suction_scores, idx0, idx1 = grid_sample(heatmap, down_rate=10, topk=1024)
 
     if len(depth_img.shape) == 3:
@@ -232,7 +232,7 @@ def get_suction_from_heatmap(depth_img, heatmap, camera_info):
     return suction_arr, idx0, idx1
 
 def inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx):
-    # 对单帧图像进行推理，保存吸取点结果和可视化
+    # 对单帧图像进行推理, 保存吸取点结果和可视化
     meta = scio.loadmat(meta_file)
     intrinsics = meta['intrinsic_matrix']
     fx, fy = intrinsics[0,0], intrinsics[1,1]
@@ -359,7 +359,7 @@ def inference(scene_idx):
         inference_one_view(rgb_file, depth_file, meta_file, scene_idx, anno_idx)
 
 if __name__ == "__main__":
-    # 主程序入口，根据split选择scene范围，依次推理
+    # 主程序入口, 根据split选择scene范围, 依次推理
     scene_list = []
     if split == 'test':
         for i in range(100, 190):

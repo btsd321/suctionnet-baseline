@@ -35,10 +35,10 @@ def drawGaussian(img, pt, score, sigma=1):
     在输入图像上绘制二维高斯分布
 
     参数说明:
-        img: torch.Tensor或np.ndarray，形状为(H, W)的单通道图像
-        pt: list或tuple，中心点坐标(x, y)
-        score: float，高斯分布中心的分数（强度）
-        sigma: int，高斯分布的标准差
+        img: torch.Tensor或np.ndarray, 形状为(H, W)的单通道图像
+        pt: list或tuple, 中心点坐标(x, y)
+        score: float, 高斯分布中心的分数(强度)
+        sigma: int, 高斯分布的标准差
     返回:
         绘制高斯后的图像
     """
@@ -48,7 +48,7 @@ def drawGaussian(img, pt, score, sigma=1):
     ul = [int(pt[0] - tmpSize), int(pt[1] - tmpSize)]
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
-    # 如果高斯分布完全在图像外，则直接返回原图
+    # 如果高斯分布完全在图像外, 则直接返回原图
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
         return img
 
@@ -73,7 +73,7 @@ def drawGaussian(img, pt, score, sigma=1):
     return img
 
 class SuctionNetDataset(Dataset):
-    # SuctionNet数据集类，负责数据加载与增强
+    # SuctionNet数据集类, 负责数据加载与增强
     def __init__(self, data_root, label_root, camera='kinect', split='train', input_size=(480, 480), adapt_radius=True):
         self.data_root = data_root
         self.label_root = label_root
@@ -145,7 +145,7 @@ class SuctionNetDataset(Dataset):
                 radius = gaussian_radius((math.ceil(bbox_h), math.ceil(bbox_w)))
                 draw_msra_gaussian(center_map, coord, radius)
         
-        # 数据增强（仅训练集）
+        # 数据增强(仅训练集)
         if self.split == 'train':
             color, depth, score, center_map = self.crop_array(color, depth, score, center_map, self.dim)
             depth_noise = np.random.normal(scale=0.03, size=depth.shape).astype(np.float32)
@@ -155,7 +155,7 @@ class SuctionNetDataset(Dataset):
         return color, depth, score, center_map, (scene_idx, anno_idx)
     
     def debug(self, saveroot):
-        # 用于调试，保存部分样本的可视化结果
+        # 用于调试, 保存部分样本的可视化结果
         for index in range(30):
             scene_idx, anno_idx = self.data_list[index][0], self.data_list[index][1]
 
@@ -309,7 +309,7 @@ def color_aug(data_rng, image):
     return image
 
 def color_aug2(data_rng, image, eig_val, eig_vec):
-    # 颜色增强，包含PCA扰动
+    # 颜色增强, 包含PCA扰动
     functions = [brightness_, contrast_, saturation_]
     random.shuffle(functions)
 

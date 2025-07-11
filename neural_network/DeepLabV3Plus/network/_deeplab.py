@@ -10,13 +10,13 @@ __all__ = ["DeepLabV3"]
 
 class DeepLabV3(_SimpleSegmentationModel):
     """
-    DeepLabV3模型实现，来自论文
+    DeepLabV3模型实现, 来自论文
     《Rethinking Atrous Convolution for Semantic Image Segmentation》
     https://arxiv.org/abs/1706.05587
 
     参数说明:
         backbone (nn.Module): 用于提取特征的主干网络。
-            主干网络应返回一个OrderedDict[Tensor]，key为"out"表示最后一层特征图，
+            主干网络应返回一个OrderedDict[Tensor], key为"out"表示最后一层特征图, 
             若有辅助分类器则还应有"aux"。
         classifier (nn.Module): 用于对主干网络输出的"out"特征进行密集预测的模块。
         aux_classifier (nn.Module, 可选): 训练时使用的辅助分类器。
@@ -25,13 +25,13 @@ class DeepLabV3(_SimpleSegmentationModel):
 
 class DeepLabV3TwoTower(_MySegmentationModel):
     """
-    双塔结构的DeepLabV3模型实现，来自论文
+    双塔结构的DeepLabV3模型实现, 来自论文
     《Rethinking Atrous Convolution for Semantic Image Segmentation》
     https://arxiv.org/abs/1706.05587
 
     参数说明:
         backbone (nn.Module): 用于提取特征的主干网络。
-            主干网络应返回一个OrderedDict[Tensor]，key为"out"表示最后一层特征图，
+            主干网络应返回一个OrderedDict[Tensor], key为"out"表示最后一层特征图, 
             若有辅助分类器则还应有"aux"。
         classifier (nn.Module): 用于对主干网络输出的"out"特征进行密集预测的模块。
         aux_classifier (nn.Module, 可选): 训练时使用的辅助分类器。
@@ -39,7 +39,7 @@ class DeepLabV3TwoTower(_MySegmentationModel):
     pass
 
 class DeepLabHeadV3Plus(nn.Module):
-    # DeepLabV3+的头部结构，融合高低层特征并输出分割结果
+    # DeepLabV3+的头部结构, 融合高低层特征并输出分割结果
     def __init__(self, in_channels, low_level_channels, num_classes, aspp_dilate=[12, 24, 36]):
         super(DeepLabHeadV3Plus, self).__init__()
         # 低层特征通道降维
@@ -81,7 +81,7 @@ class DeepLabHeadV3Plus(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 class DeepLabHead(nn.Module):
-    # DeepLabV3的头部结构，仅用高层特征
+    # DeepLabV3的头部结构, 仅用高层特征
     def __init__(self, in_channels, num_classes, aspp_dilate=[12, 24, 36]):
         super(DeepLabHead, self).__init__()
 
@@ -109,15 +109,15 @@ class DeepLabHead(nn.Module):
 
 class AtrousSeparableConvolution(nn.Module):
     """ 空洞可分离卷积
-    先进行深度可分离卷积（分组数等于输入通道数），再进行逐点卷积
+    先进行深度可分离卷积(分组数等于输入通道数), 再进行逐点卷积
     """
     def __init__(self, in_channels, out_channels, kernel_size,
                             stride=1, padding=0, dilation=1, bias=True):
         super(AtrousSeparableConvolution, self).__init__()
         self.body = nn.Sequential(
-            # 深度可分离卷积（每个输入通道单独卷积）
+            # 深度可分离卷积(每个输入通道单独卷积)
             nn.Conv2d( in_channels, in_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias, groups=in_channels ),
-            # 逐点卷积（1x1卷积，整合通道信息）
+            # 逐点卷积(1x1卷积, 整合通道信息)
             nn.Conv2d( in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=bias),
         )
         
@@ -161,7 +161,7 @@ class ASPPPooling(nn.Sequential):
         return F.interpolate(x, size=size, mode='bilinear', align_corners=False)
 
 class ASPP(nn.Module):
-    # 空洞空间金字塔池化模块（ASPP），用于多尺度特征提取
+    # 空洞空间金字塔池化模块(ASPP), 用于多尺度特征提取
     def __init__(self, in_channels, atrous_rates):
         super(ASPP, self).__init__()
         out_channels = 256
@@ -203,7 +203,7 @@ class ASPP(nn.Module):
 
 def convert_to_separable_conv(module):
     """
-    将普通卷积层（kernel_size>1）替换为空洞可分离卷积层
+    将普通卷积层(kernel_size>1)替换为空洞可分离卷积层
     递归地遍历模块的所有子模块并替换
     """
     new_module = module

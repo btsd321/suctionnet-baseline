@@ -22,8 +22,8 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
 
 def stdFilt(img, wlen):
     '''
-    计算图像的局部标准差（标准差滤波）
-    :param img: 输入图像，可以为多通道
+    计算图像的局部标准差(标准差滤波)
+    :param img: 输入图像, 可以为多通道
     :param wlen: 滤波窗口大小
     :return: 标准差滤波后的图像
     '''
@@ -35,7 +35,7 @@ def estimate_suction(depth_img, obj_mask, camera_info):
     point_cloud = create_point_cloud_from_depth_image(depth_img, camera_info)
     # print('point_cloud:', point_cloud.shape)
 
-    # 生成有效像素掩码（只在目标掩码包围盒区域内，且深度不为0的像素为有效）
+    # 生成有效像素掩码(只在目标掩码包围盒区域内, 且深度不为0的像素为有效)
     valid_idx = np.zeros_like(obj_mask, dtype=np.bool)
     coord1, coord2 = np.nonzero(obj_mask)
     coord1_min, coord1_max = coord1.min(), coord1.max()
@@ -48,7 +48,7 @@ def estimate_suction(depth_img, obj_mask, camera_info):
     point_cloud_valid = point_cloud[valid_idx]
     # 构建Open3D点云对象
     pc_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(point_cloud_valid))
-    # 估算点云法向量，KNN邻域为224
+    # 估算点云法向量, KNN邻域为224
     pc_o3d.estimate_normals(o3d.geometry.KDTreeSearchParamKNN(224), fast_normal_computation=False)
     # 法向量朝向统一为z轴负方向
     pc_o3d.orient_normals_to_align_with_direction(np.array([0., 0., -1.]))
@@ -59,10 +59,10 @@ def estimate_suction(depth_img, obj_mask, camera_info):
     normal_map = np.zeros([height, width, 3], dtype=np.float32)
     normal_map[valid_idx] = normals
 
-    # 计算法向量的局部标准差（反映表面平整度），并取均值作为吸取分数
+    # 计算法向量的局部标准差(反映表面平整度), 并取均值作为吸取分数
     # mean_normal_std = np.mean(generic_filter(normal_map, np.std, size=25), axis=2)
     mean_normal_std = np.mean(stdFilt(normal_map, 25), axis=2)
-    # 归一化得到吸取分数热力图，值越大表示越平整
+    # 归一化得到吸取分数热力图, 值越大表示越平整
     heatmap = 1 - mean_normal_std / np.max(mean_normal_std)
     heatmap[~valid_idx] = 0  # 无效区域分数设为0
 

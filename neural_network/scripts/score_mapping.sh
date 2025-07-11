@@ -1,4 +1,4 @@
-# 为SuctionNet生成score map(吸取分数热力图)，支持多线程加速
+# 为SuctionNet生成score map(吸取分数热力图), 支持多线程加速
 
 # 获取当前sh文件所在目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

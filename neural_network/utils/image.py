@@ -14,7 +14,7 @@ import cv2
 import random
 
 def flip(img):
-    # 水平翻转图像（对最后一个通道进行反转），常用于数据增强
+    # 水平翻转图像(对最后一个通道进行反转), 常用于数据增强
     return img[:, :, ::-1].copy()  
 
 def transform_preds(coords, center, scale, output_size):
@@ -32,15 +32,15 @@ def get_affine_transform(center,
                          shift=np.array([0, 0], dtype=np.float32),
                          inv=0):
     """
-    计算仿射变换矩阵，用于图像的缩放、旋转、平移等操作
+    计算仿射变换矩阵, 用于图像的缩放、旋转、平移等操作
 
     参数说明:
         center: 变换中心点坐标
-        scale: 缩放因子（可为标量或长度为2的数组）
-        rot: 旋转角度（单位：度）
+        scale: 缩放因子(可为标量或长度为2的数组)
+        rot: 旋转角度(单位：度)
         output_size: 输出图像的尺寸 (w, h)
         shift: 平移偏移量
-        inv: 是否返回逆变换矩阵（1为逆，0为正向）
+        inv: 是否返回逆变换矩阵(1为逆, 0为正向)
     返回:
         2x3的仿射变换矩阵
     """
@@ -80,7 +80,7 @@ def affine_transform(pt, t):
     return new_pt[:2]
 
 def get_3rd_point(a, b):
-    # 计算第三个点，使得三点确定一个仿射变换
+    # 计算第三个点, 使得三点确定一个仿射变换
     direct = a - b
     return b + np.array([-direct[1], direct[0]], dtype=np.float32)
 
@@ -95,7 +95,7 @@ def get_dir(src_point, rot_rad):
     return src_result
 
 def crop(img, center, scale, output_size, rot=0):
-    # 对图像进行仿射变换裁剪，支持缩放、旋转
+    # 对图像进行仿射变换裁剪, 支持缩放、旋转
     trans = get_affine_transform(center, scale, rot, output_size)
 
     dst_img = cv2.warpAffine(img,
@@ -107,7 +107,7 @@ def crop(img, center, scale, output_size, rot=0):
 
 def gaussian_radius(det_size, min_overlap=0.7):
     """
-    计算高斯核半径，使得高斯区域与目标框的最小重叠率为min_overlap
+    计算高斯核半径, 使得高斯区域与目标框的最小重叠率为min_overlap
     常用于目标检测中的热力图生成
     """
     height, width = det_size
@@ -142,7 +142,7 @@ def gaussian2D(shape, sigma=1):
 
 def draw_umich_gaussian(heatmap, center, radius, k=1):
     """
-    在热力图上绘制高斯分布（Umich风格，常用于CenterNet等）
+    在热力图上绘制高斯分布(Umich风格, 常用于CenterNet等)
     参数说明:
         heatmap: 输入热力图
         center: 高斯中心点坐标
@@ -167,14 +167,14 @@ def draw_umich_gaussian(heatmap, center, radius, k=1):
 
 def draw_dense_reg(regmap, heatmap, center, value, radius, is_offset=False):
     """
-    在regmap上绘制密集的回归目标（如offset、尺寸等），只在高斯区域内赋值
+    在regmap上绘制密集的回归目标(如offset、尺寸等), 只在高斯区域内赋值
     参数说明:
         regmap: 回归目标图
         heatmap: 热力图
         center: 中心点坐标
-        value: 要填充的回归值（如偏移量）
+        value: 要填充的回归值(如偏移量)
         radius: 高斯半径
-        is_offset: 是否为偏移量（True时会做特殊处理）
+        is_offset: 是否为偏移量(True时会做特殊处理)
     """
     diameter = 2 * radius + 1
     gaussian = gaussian2D((diameter, diameter), sigma=diameter / 6)
@@ -208,7 +208,7 @@ def draw_dense_reg(regmap, heatmap, center, value, radius, is_offset=False):
 
 def draw_msra_gaussian(heatmap, center, sigma):
     """
-    在热力图上绘制高斯分布（MSRA风格，常用于姿态估计等）
+    在热力图上绘制高斯分布(MSRA风格, 常用于姿态估计等)
     参数说明:
         heatmap: 输入热力图
         center: 高斯中心点坐标
@@ -241,7 +241,7 @@ def grayscale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 def lighting_(data_rng, image, alphastd, eigval, eigvec):
-    # AlexNet风格的PCA颜色扰动，用于颜色增强
+    # AlexNet风格的PCA颜色扰动, 用于颜色增强
     alpha = data_rng.normal(scale=alphastd, size=(3, ))
     image += np.dot(eigvec, eigval * alpha)
 
@@ -267,7 +267,7 @@ def contrast_(data_rng, image, gs, gs_mean, var):
     blend_(alpha, image, gs_mean)
 
 def color_aug(data_rng, image, eig_val, eig_vec):
-    # 对图像进行亮度、对比度、饱和度扰动，并加上PCA扰动
+    # 对图像进行亮度、对比度、饱和度扰动, 并加上PCA扰动
     functions = [brightness_, contrast_, saturation_]
     random.shuffle(functions)
 

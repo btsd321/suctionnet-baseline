@@ -7,19 +7,19 @@ import torch.nn.functional as F
 def _convnet_resnet(backbone_name, num_classes, output_stride, pretrained_backbone):
     # 构建基于ResNet骨干网络的ConvNet分割模型
     # 参数说明：
-    # backbone_name: 使用的resnet骨干网络名称（如'resnet101'）
+    # backbone_name: 使用的resnet骨干网络名称(如'resnet101')
     # num_classes: 输出类别数
     # output_stride: 输出特征图的下采样倍数
     # pretrained_backbone: 是否加载预训练权重
 
     if output_stride==8:
-        # 若输出步长为8，则后两层使用空洞卷积替换stride
+        # 若输出步长为8, 则后两层使用空洞卷积替换stride
         replace_stride_with_dilation=[False, True, True]
     else:
-        # 默认输出步长为16，仅最后一层使用空洞卷积
+        # 默认输出步长为16, 仅最后一层使用空洞卷积
         replace_stride_with_dilation=[False, False, True]
 
-    # 构建两个resnet骨干网络，分别处理不同输入
+    # 构建两个resnet骨干网络, 分别处理不同输入
     backbone1 = resnet.__dict__[backbone_name](
         pretrained=pretrained_backbone,
         replace_stride_with_dilation=replace_stride_with_dilation)
@@ -30,7 +30,7 @@ def _convnet_resnet(backbone_name, num_classes, output_stride, pretrained_backbo
     
     inplanes = 2048  # 主干网络输出通道数
 
-    # 特征融合层，先拼接再降维
+    # 特征融合层, 先拼接再降维
     fuselayers = nn.Sequential(
             nn.Conv2d(inplanes*2, inplanes, 3, padding=1, bias=False),
             nn.BatchNorm2d(inplanes),
@@ -43,7 +43,7 @@ def _convnet_resnet(backbone_name, num_classes, output_stride, pretrained_backbo
     return_layers = {'layer4': 'out'}  # 指定提取主干网络的哪一层输出
     classifier = ConvNetHead(inplanes, num_classes)  # 分类头
     
-    # 用IntermediateLayerGetter包装主干网络，便于获取中间层输出
+    # 用IntermediateLayerGetter包装主干网络, 便于获取中间层输出
     backbone1 = IntermediateLayerGetter(backbone1, return_layers=return_layers)
     backbone2 = IntermediateLayerGetter(backbone2, return_layers=return_layers)
 
@@ -51,7 +51,7 @@ def _convnet_resnet(backbone_name, num_classes, output_stride, pretrained_backbo
     return model
 
 class ConvNetHead(nn.Module):
-    # 分割头部结构，将主干输出映射到类别空间
+    # 分割头部结构, 将主干输出映射到类别空间
     def __init__(self, in_channels, num_classes):
         super(ConvNetHead, self).__init__()
 
@@ -64,7 +64,7 @@ class ConvNetHead(nn.Module):
         self._init_weight()
 
     def forward(self, feature):
-        # 输入为字典，取出主干输出特征
+        # 输入为字典, 取出主干输出特征
         return self.classifier(feature['out'])
     
     def _init_weight(self):
@@ -77,7 +77,7 @@ class ConvNetHead(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 class _MySegmentationModel(nn.Module):
-    # 主分割模型，包含两个主干网络、融合层和分类头
+    # 主分割模型, 包含两个主干网络、融合层和分类头
     def __init__(self, backbone1, backbone2, fuselayers, classifier):
         super(_MySegmentationModel, self).__init__()
         self.backbone1 = backbone1  # 第一个主干网络
@@ -88,8 +88,8 @@ class _MySegmentationModel(nn.Module):
     def forward(self, x):
         # 前向传播
         input_shape = x.shape[-2:]  # 输入原始空间尺寸
-        x1 = x[:, :3, ...]  # 取前3通道（如RGB）
-        x2 = x[:, 3:, ...]  # 取后面通道（如D或其他）
+        x1 = x[:, :3, ...]  # 取前3通道(如RGB)
+        x2 = x[:, 3:, ...]  # 取后面通道(如D或其他)
         features1 = self.backbone1(x1)  # 主干1特征
         features2 = self.backbone2(x2)  # 主干2特征
 

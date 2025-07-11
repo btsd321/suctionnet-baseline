@@ -10,7 +10,7 @@ from typing import List, Tuple
 
 class SharedMLP(nn.Sequential):
     """
-    多层感知机（MLP）模块，可选批归一化和激活函数，支持预激活结构。
+    多层感知机(MLP)模块, 可选批归一化和激活函数, 支持预激活结构。
     """
 
     def __init__(
@@ -41,7 +41,7 @@ class SharedMLP(nn.Sequential):
 
 class _BNBase(nn.Sequential):
     """
-    批归一化基础类，自动初始化权重和偏置。
+    批归一化基础类, 自动初始化权重和偏置。
     """
 
     def __init__(self, in_size, batch_norm=None, name=""):
@@ -81,7 +81,7 @@ class BatchNorm3d(_BNBase):
 
 class _ConvBase(nn.Sequential):
     """
-    卷积层基础类，支持可选批归一化、激活函数、预激活结构等。
+    卷积层基础类, 支持可选批归一化、激活函数、预激活结构等。
     """
 
     def __init__(
@@ -122,7 +122,7 @@ class _ConvBase(nn.Sequential):
                 bn_unit = batch_norm(in_size)
 
         if preact:
-            # 预激活结构：先BN和激活，再卷积
+            # 预激活结构：先BN和激活, 再卷积
             if bn:
                 self.add_module(name + 'bn', bn_unit)
 
@@ -142,7 +142,7 @@ class _ConvBase(nn.Sequential):
 
 class Conv1d(_ConvBase):
     """
-    一维卷积模块，支持可选BN、激活、预激活等
+    一维卷积模块, 支持可选BN、激活、预激活等
     """
 
     def __init__(
@@ -179,7 +179,7 @@ class Conv1d(_ConvBase):
 
 class Conv2d(_ConvBase):
     """
-    二维卷积模块，支持可选BN、激活、预激活等
+    二维卷积模块, 支持可选BN、激活、预激活等
     """
 
     def __init__(
@@ -216,7 +216,7 @@ class Conv2d(_ConvBase):
 
 class Conv3d(_ConvBase):
     """
-    三维卷积模块，支持可选BN、激活、预激活等
+    三维卷积模块, 支持可选BN、激活、预激活等
     """
 
     def __init__(
@@ -253,7 +253,7 @@ class Conv3d(_ConvBase):
 
 class FC(nn.Sequential):
     """
-    全连接层模块，支持可选BN、激活、预激活等
+    全连接层模块, 支持可选BN、激活、预激活等
     """
 
     def __init__(
@@ -295,7 +295,7 @@ class FC(nn.Sequential):
 
 def set_bn_momentum_default(bn_momentum):
     """
-    返回一个函数，用于设置模型中所有BN层的动量参数
+    返回一个函数, 用于设置模型中所有BN层的动量参数
     """
     def fn(m):
         if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
@@ -306,7 +306,7 @@ def set_bn_momentum_default(bn_momentum):
 
 class BNMomentumScheduler(object):
     """
-    BN动量调度器，可根据epoch动态调整BN层的momentum
+    BN动量调度器, 可根据epoch动态调整BN层的momentum
     """
 
     def __init__(

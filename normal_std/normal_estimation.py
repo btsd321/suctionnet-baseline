@@ -33,7 +33,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
     return cloud
 
 def grid_sample(pred_score_map, down_rate=20, topk=512):
-    # 对预测分数图进行网格采样，返回topk分数及其像素坐标
+    # 对预测分数图进行网格采样, 返回topk分数及其像素坐标
     num_row = pred_score_map.shape[0] // down_rate
     num_col = pred_score_map.shape[1] // down_rate
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # 估算吸取分数热力图、法向量和点云
     heatmap, normals, point_cloud = estimate_suction(depth, seg_mask, camera_info)
 
-    # 网格采样，选取topk吸取点
+    # 网格采样, 选取topk吸取点
     suction_scores, idx0, idx1 = grid_sample(heatmap, down_rate=10, topk=1024)
     print('idx0 min', idx0.min())
     print('idx0 max', idx0.max())
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     print('pc_o3d:', np.array(pc_o3d.points).astype(np.float32).shape)
     pc_sampled = pc_o3d.voxel_down_sample(0.003)
     pc_points = np.array(pc_sampled.points).astype(np.float32)
-    # 将采样点与吸取点合并，保证吸取点法向量能被估算
+    # 将采样点与吸取点合并, 保证吸取点法向量能被估算
     pc_points = np.concatenate([suction_points, pc_points], axis=0)
     print('pc_points:', pc_points.shape)
     pc_sampled.points = o3d.utility.Vector3dVector(pc_points)

@@ -44,7 +44,7 @@ def uniform_kernel(kernel_size):
     return kernel
 
 def grid_sample(pred_score_map, down_rate=20, topk=512):
-    # 对预测分数图进行网格采样，返回topk分数及其像素坐标
+    # 对预测分数图进行网格采样, 返回topk分数及其像素坐标
     num_row = pred_score_map.shape[0] // down_rate
     num_col = pred_score_map.shape[1] // down_rate
 
@@ -83,11 +83,11 @@ def drawGaussian(img, pt, score, sigma=1):
     参数说明
     ----------
     img: torch.Tensor 或 numpy.ndarray
-        输入图像，形状为 (H, W)。
+        输入图像, 形状为 (H, W)。
     pt: list or tuple
         点坐标 (x, y)。
     score: float
-        高斯分布的强度（权重）。
+        高斯分布的强度(权重)。
     sigma: int
         高斯分布的标准差。
     返回
@@ -102,7 +102,7 @@ def drawGaussian(img, pt, score, sigma=1):
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
-        # 如果高斯分布完全超出图像边界，直接返回原图
+        # 如果高斯分布完全超出图像边界, 直接返回原图
         return img
 
     # 生成高斯分布
@@ -156,12 +156,12 @@ def inference(scene_idx):
         heatmap = torch.from_numpy(heatmap).unsqueeze(0).unsqueeze(0)
         heatmap = F.conv2d(heatmap, kernel).squeeze().numpy()
 
-        # 网格采样，选取topk吸取点
+        # 网格采样, 选取topk吸取点
         suction_scores, idx0, idx1 = grid_sample(heatmap, down_rate=10, topk=1024)
         suction_directions = normals[idx0, idx1, :]
         suction_translations = point_cloud[idx0, idx1, :]
 
-        # 拼接吸取点信息（分数、法向、三维坐标）
+        # 拼接吸取点信息(分数、法向、三维坐标)
         suction_arr = np.concatenate([suction_scores[..., np.newaxis], suction_directions, suction_translations], axis=-1)
 
         # 保存吸取点结果
@@ -208,7 +208,7 @@ def inference(scene_idx):
             im.save(visu_dir+'/%04d_sampled'%anno_idx+'.png')
 
 if __name__ == "__main__":
-    # 主程序入口，根据split选择scene范围，依次推理
+    # 主程序入口, 根据split选择scene范围, 依次推理
     scene_list = []
     if split == 'test':
         for i in range(100, 190):

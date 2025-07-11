@@ -1,4 +1,4 @@
-# 为SuctionNet生成score map(吸取分数热力图)，支持多线程加速
+# 为SuctionNet生成score map(吸取分数热力图), 支持多线程加速
 import os
 import numpy as np
 from PIL import Image
@@ -42,7 +42,7 @@ class CameraInfo():
         self.scale = scale
 
 def parse_posevector(posevector):
-    # 将位姿向量（含欧拉角）转换为4x4位姿矩阵
+    # 将位姿向量(含欧拉角)转换为4x4位姿矩阵
     mat = np.zeros([4,4],dtype=np.float32)
     alpha, beta, gamma = posevector[4:7]
     alpha = alpha / 180.0 * np.pi
@@ -64,7 +64,7 @@ def transform_points(points, trans):
 
 def generate_scene_model(dataset_root, scene_name, anno_idx, return_poses=False, 
                             align=False, camera='realsense'):
-    # 加载指定场景和帧的所有物体模型，并返回物体ID和位姿矩阵列表
+    # 加载指定场景和帧的所有物体模型, 并返回物体ID和位姿矩阵列表
     print('Scene {}, {}'.format(scene_name, camera))
     scene_reader = xmlReader(os.path.join(dataset_root, 'scenes', scene_name, camera, 'annotations', '%04d.xml'%anno_idx))
     posevectors = scene_reader.getposevectorlist()
@@ -99,7 +99,7 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
 
 
 def points2depth(points,scene_idx, camera='kinect', anno_idx=0):
-    # 将三维点投影到像素平面，返回像素坐标和深度
+    # 将三维点投影到像素平面, 返回像素坐标和深度
     meta_path = os.path.join(scenedir.format('%04d'%scene_idx, camera), 'meta', '%04d.mat'%(anno_idx))
     meta = scio.loadmat(meta_path)
     
@@ -156,11 +156,11 @@ def drawGaussian(img, pt, score, sigma=1):
     参数说明
     ----------
     img: torch.Tensor
-        输入图像，形状为 (H, W)。
+        输入图像, 形状为 (H, W)。
     pt: list or tuple
         点坐标 (x, y)。
     score: float
-        高斯分布的强度（权重）。
+        高斯分布的强度(权重)。
     sigma: int
         高斯分布的标准差。
     返回
@@ -175,7 +175,7 @@ def drawGaussian(img, pt, score, sigma=1):
     br = [int(pt[0] + tmpSize + 1), int(pt[1] + tmpSize + 1)]
 
     if (ul[0] >= img.shape[1] or ul[1] >= img.shape[0] or br[0] < 0 or br[1] < 0):
-        # 如果不在范围内，直接返回原图
+        # 如果不在范围内, 直接返回原图
         return img
 
     # 生成高斯分布
@@ -199,7 +199,7 @@ def drawGaussian(img, pt, score, sigma=1):
     return img
 
 def score_mapping(scene_idx, camera):
-    # 针对指定scene和相机，生成每一帧的score map并保存
+    # 针对指定scene和相机, 生成每一帧的score map并保存
     if not os.path.exists(colli_root+'/{:04d}_collision.npz'.format(scene_idx)):
         print('Missing ' + colli_root+'/{:04d}_collision.npz'.format(scene_idx))
         return
@@ -287,7 +287,7 @@ def score_mapping(scene_idx, camera):
 
 
 if __name__ == "__main__":
-    # 主程序入口，支持多进程并行处理多个scene
+    # 主程序入口, 支持多进程并行处理多个scene
     align = True
     camera = FLAGS.camera   
     

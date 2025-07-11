@@ -22,8 +22,8 @@ def create_point_cloud_from_depth_image(depth, camera, organized=True):
 
 def stdFilt(img, wlen):
     '''
-    计算图像的局部标准差（标准差滤波）
-    :param img: 输入图像，可以为多通道
+    计算图像的局部标准差(标准差滤波)
+    :param img: 输入图像, 可以为多通道
     :param wlen: 滤波窗口大小
     :return: 标准差滤波后的图像
     '''
@@ -33,11 +33,11 @@ def stdFilt(img, wlen):
 def estimate_suction(depth_img, obj_mask, camera_info):
     # 估算吸取分数热力图、法向量和点云
     point_cloud = create_point_cloud_from_depth_image(depth_img, camera_info)
-    # 生成有效像素掩码（只在目标掩码区域且深度不为0的像素为有效）
+    # 生成有效像素掩码(只在目标掩码区域且深度不为0的像素为有效)
     valid_idx = obj_mask & (point_cloud[..., 2] != 0)
     height, width, _ = point_cloud.shape
 
-    # 以下为不同法向量估算方式的注释代码（可选Open3D或PCL）
+    # 以下为不同法向量估算方式的注释代码(可选Open3D或PCL)
     # point_cloud = point_cloud.reshape(-1, 3)
     # point_cloud = point_cloud[valid_idx]
     # pc_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(point_cloud))
@@ -46,7 +46,7 @@ def estimate_suction(depth_img, obj_mask, camera_info):
     # pc_o3d.normalize_normals()
     # normals = np.array(pc_o3d.normals).astype(np.float32)
     
-    # PCL法向量估算（注释掉的代码，实际未启用）
+    # PCL法向量估算(注释掉的代码, 实际未启用)
     # p = pcl.PointCloud(point_cloud.astype(np.float32))
     # norm = p.make_NormalEstimation()
     # norm.set_KSearch(50)
@@ -55,13 +55,13 @@ def estimate_suction(depth_img, obj_mask, camera_info):
     # normals = normals[:, 0:3]
     # normals[normals[..., -1] > 0] = -normals[normals[..., -1] > 0]
 
-    # 使用Sobel算子计算点云梯度，进而估算法向量
+    # 使用Sobel算子计算点云梯度, 进而估算法向量
     ksize = 31
     gy = cv2.Sobel(point_cloud, cv2.CV_64F, 1, 0, ksize=ksize)  # 对x方向求导
     gx = cv2.Sobel(point_cloud, cv2.CV_64F, 0, 1, ksize=ksize)  # 对y方向求导
     gx_data = gx.reshape(height * width, 3)
     gy_data = gy.reshape(height * width, 3)
-    pc_grads = np.cross(gx_data, gy_data)  # 叉乘得到法向量，默认朝向相机
+    pc_grads = np.cross(gx_data, gy_data)  # 叉乘得到法向量, 默认朝向相机
 
     # 法向量归一化
     pc_grad_norms = np.linalg.norm(pc_grads, axis=1)
@@ -81,12 +81,12 @@ def estimate_suction(depth_img, obj_mask, camera_info):
 
     print('filter start')
     tic = time.time()
-    # 计算法向量的局部标准差（反映表面平整度），并取均值作为吸取分数
+    # 计算法向量的局部标准差(反映表面平整度), 并取均值作为吸取分数
     # mean_normal_std = np.mean(generic_filter(normal_map, np.std, size=25), axis=2)
     mean_normal_std = np.mean(stdFilt(normal_map, 25), axis=2)
     toc = time.time()
     print('filter time:', toc - tic)
-    # 归一化得到吸取分数热力图，值越大表示越平整
+    # 归一化得到吸取分数热力图, 值越大表示越平整
     heatmap = 1 - mean_normal_std / np.max(mean_normal_std)
     heatmap[~valid_idx] = 0  # 无效区域分数设为0
 

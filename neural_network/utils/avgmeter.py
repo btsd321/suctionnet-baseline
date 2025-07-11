@@ -20,7 +20,7 @@ class AverageMeter(object):
   def update(self, val, n=1):
     # 更新统计量
     # val: 新增的数值
-    # n: 新增数值的权重（默认1，适用于批量更新）
+    # n: 新增数值的权重(默认1, 适用于批量更新)
     self.val = val
     self.sum += val * n
     self.count += n

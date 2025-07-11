@@ -3,7 +3,7 @@ from transforms3d.euler import quat2euler, euler2quat
 import numpy as np
 
 def get_pose(pose):
-    # 将4x4位姿矩阵转换为(x, y, z, alpha, beta, gamma)格式，角度单位为度
+    # 将4x4位姿矩阵转换为(x, y, z, alpha, beta, gamma)格式, 角度单位为度
     pos, quat = pose_4x4_to_pos_quat(pose)
     euler = np.array([quat2euler(quat)[0], quat2euler(quat)[1], quat2euler(quat)[2]])
     euler = euler * 180.0 / np.pi  # 弧度转角度
@@ -13,11 +13,11 @@ def get_pose(pose):
 
 def get_mat(x, y, z, alpha, beta, gamma):
     """
-    根据输入的位置和欧拉角，生成4x4位姿矩阵
+    根据输入的位置和欧拉角, 生成4x4位姿矩阵
 
     参数说明:
         x, y, z: 平移分量
-        alpha, beta, gamma: 欧拉角（单位：度）
+        alpha, beta, gamma: 欧拉角(单位：度)
     返回:
         pose: 4x4位姿矩阵
     """
@@ -38,7 +38,7 @@ def pos_quat_to_pose_4x4(pos, quat):
         pos: 长度为3的位置向量
         quat: 长度为4的四元数
     返回:
-        pose: 4x4的numpy数组，表示位姿矩阵
+        pose: 4x4的numpy数组, 表示位姿矩阵
     """
     pose = np.zeros([4, 4])
     mat = quat2mat(quat)  # 四元数转旋转矩阵
@@ -52,7 +52,7 @@ def pose_4x4_to_pos_quat(pose):
     将4x4位姿矩阵分解为位置和四元数
 
     参数说明:
-        pose: 4x4的numpy数组，表示位姿矩阵
+        pose: 4x4的numpy数组, 表示位姿矩阵
     返回:
         pos: 长度为3的位置向量
         quat: 长度为4的四元数

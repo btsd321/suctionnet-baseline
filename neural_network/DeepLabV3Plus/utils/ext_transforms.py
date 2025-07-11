@@ -14,7 +14,7 @@ class ExtRandomHorizontalFlip(object):
     """以给定概率对输入的PIL图像进行随机水平翻转
 
     参数说明:
-        p (float): 图像被翻转的概率，默认值为0.5
+        p (float): 图像被翻转的概率, 默认值为0.5
     """
 
     def __init__(self, p=0.5):
@@ -36,7 +36,7 @@ class ExtRandomHorizontalFlip(object):
         return self.__class__.__name__ + '(p={})'.format(self.p)
 
 class ExtCompose(object):
-    """将多个变换组合在一起，顺序依次对图像和标签进行处理
+    """将多个变换组合在一起, 顺序依次对图像和标签进行处理
     参数说明:
         transforms (list): 变换对象列表
     示例:
@@ -65,7 +65,7 @@ class ExtCompose(object):
 class ExtCenterCrop(object):
     """对输入的PIL图像进行中心裁剪
     参数说明:
-        size (序列或int): 裁剪输出的目标尺寸。如果size为int，则输出为正方形裁剪
+        size (序列或int): 裁剪输出的目标尺寸。如果size为int, 则输出为正方形裁剪
     """
 
     def __init__(self, size):
@@ -88,10 +88,10 @@ class ExtCenterCrop(object):
         return self.__class__.__name__ + '(size={0})'.format(self.size)
 
 class ExtRandomScale(object):
-    """对输入的PIL图像进行随机缩放，缩放比例在给定范围内随机采样
+    """对输入的PIL图像进行随机缩放, 缩放比例在给定范围内随机采样
     参数说明:
         scale_range (tuple): 缩放比例范围
-        interpolation: 插值方式，默认双线性插值
+        interpolation: 插值方式, 默认双线性插值
     """
     def __init__(self, scale_range, interpolation=Image.BILINEAR):
         self.scale_range = scale_range
@@ -118,7 +118,7 @@ class ExtScale(object):
     """将输入的PIL图像缩放到指定比例
     参数说明:
         scale (float): 缩放比例
-        interpolation: 插值方式，默认双线性插值
+        interpolation: 插值方式, 默认双线性插值
     """
     def __init__(self, scale, interpolation=Image.BILINEAR):
         self.scale = scale
@@ -143,10 +143,10 @@ class ExtScale(object):
 class ExtRandomRotation(object):
     """对输入的PIL图像进行随机旋转
     参数说明:
-        degrees (float/tuple): 旋转角度范围。如果为单个数，则范围为(-degrees, +degrees)
+        degrees (float/tuple): 旋转角度范围。如果为单个数, 则范围为(-degrees, +degrees)
         resample: 重采样方式
         expand (bool): 是否扩展输出以包含整个旋转后的图像
-        center (tuple): 旋转中心，默认图像中心
+        center (tuple): 旋转中心, 默认图像中心
     """
     def __init__(self, degrees, resample=False, expand=False, center=None):
         if isinstance(degrees, numbers.Number):
@@ -194,7 +194,7 @@ class ExtRandomRotation(object):
 class ExtRandomHorizontalFlip(object):
     """以给定概率对输入的PIL图像进行随机水平翻转
     参数说明:
-        p (float): 图像被翻转的概率，默认值为0.5
+        p (float): 图像被翻转的概率, 默认值为0.5
     """
     def __init__(self, p=0.5):
         self.p = p
@@ -217,7 +217,7 @@ class ExtRandomHorizontalFlip(object):
 class ExtRandomVerticalFlip(object):
     """以给定概率对输入的PIL图像进行随机垂直翻转
     参数说明:
-        p (float): 图像被翻转的概率，默认值为0.5
+        p (float): 图像被翻转的概率, 默认值为0.5
     """
     def __init__(self, p=0.5):
         self.p = p
@@ -238,7 +238,7 @@ class ExtRandomVerticalFlip(object):
         return self.__class__.__name__ + '(p={})'.format(self.p)
 
 class ExtPad(object):
-    # 对输入图像和标签进行填充，使其尺寸能被diviser整除
+    # 对输入图像和标签进行填充, 使其尺寸能被diviser整除
     def __init__(self, diviser=32):
         self.diviser = diviser
     
@@ -252,7 +252,7 @@ class ExtPad(object):
 
 class ExtToTensor(object):
     """将PIL图像或numpy数组转换为Tensor
-    图像会被归一化到[0,1]，标签不会归一化
+    图像会被归一化到[0,1], 标签不会归一化
     参数说明:
         normalize (bool): 是否归一化图像
         target_type (str): 标签的目标类型
@@ -279,7 +279,7 @@ class ExtToTensor(object):
 
 class ExtNormalize(object):
     """对Tensor图像进行归一化处理
-    给定均值mean和标准差std，对每个通道进行归一化
+    给定均值mean和标准差std, 对每个通道进行归一化
     参数说明:
         mean (序列): 每个通道的均值
         std (序列): 每个通道的标准差
@@ -291,8 +291,8 @@ class ExtNormalize(object):
     def __call__(self, tensor, lbl):
         """
         参数说明:
-            tensor (Tensor): 需要归一化的图像Tensor，形状为(C, H, W)
-            lbl (Tensor): 标签Tensor，仅作占位，不做处理
+            tensor (Tensor): 需要归一化的图像Tensor, 形状为(C, H, W)
+            lbl (Tensor): 标签Tensor, 仅作占位, 不做处理
         返回:
             Tensor: 归一化后的图像
             Tensor: 原始标签
@@ -305,9 +305,9 @@ class ExtNormalize(object):
 class ExtRandomCrop(object):
     """对输入的PIL图像进行随机裁剪
     参数说明:
-        size (序列或int): 裁剪输出的目标尺寸。如果size为int，则输出为正方形裁剪
-        padding (int或序列): 可选，裁剪前的填充
-        pad_if_needed (bool): 若为True，当输入尺寸小于目标尺寸时自动填充
+        size (序列或int): 裁剪输出的目标尺寸。如果size为int, 则输出为正方形裁剪
+        padding (int或序列): 可选, 裁剪前的填充
+        pad_if_needed (bool): 若为True, 当输入尺寸小于目标尺寸时自动填充
     """
     def __init__(self, size, padding=0, pad_if_needed=False):
         if isinstance(size, numbers.Number):
@@ -368,8 +368,8 @@ class ExtRandomCrop(object):
 class ExtResize(object):
     """将输入的PIL图像缩放到指定尺寸
     参数说明:
-        size (序列或int): 输出目标尺寸。如果为序列如(h, w)，则输出为该尺寸；如果为int，则短边缩放到该值
-        interpolation: 插值方式，默认双线性插值
+        size (序列或int): 输出目标尺寸。如果为序列如(h, w), 则输出为该尺寸；如果为int, 则短边缩放到该值
+        interpolation: 插值方式, 默认双线性插值
     """
     def __init__(self, size, interpolation=Image.BILINEAR):
         assert isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)
@@ -490,7 +490,7 @@ class Lambda(object):
         return self.__class__.__name__ + '()'
 
 class Compose(object):
-    """将多个变换组合在一起，依次对图像进行处理
+    """将多个变换组合在一起, 依次对图像进行处理
     参数说明:
         transforms (list): 变换对象列表
     示例:

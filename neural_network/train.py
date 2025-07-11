@@ -17,7 +17,7 @@ parser.add_argument('--model', default='deeplabv3plus_resnet101', help='模型�
 parser.add_argument('--checkpoint_path', default=None, help='模型权重路径 [默认: None]')
 parser.add_argument("--num_classes", type=int, default=2)# 类别数
 parser.add_argument("--output_stride", type=int, default=16, choices=[8, 16])# 输出步长
-parser.add_argument('--camera', default='realsense', help='相机名称，kinect或realsense [默认: realsense]')
+parser.add_argument('--camera', default='realsense', help='相机名称, kinect或realsense [默认: realsense]')
 parser.add_argument('--log_dir', default='/DATA2/Benchmark/suction/models/log_kinectV6', help='模型日志与权重保存目录 [默认: log]')
 parser.add_argument('--data_root', default='/DATA2/Benchmark/graspnet', help='数据集根目录 [默认: log]')
 parser.add_argument('--label_root', default='/ssd1/hanwen/grasping/graspnet_label', help='标签根目录 [默认: log]')
@@ -25,7 +25,7 @@ parser.add_argument('--max_epoch', type=int, default=100, help='训练轮数 [�
 parser.add_argument('--batch_size', type=int, default=24, help='训练时的批次大小 [默认: 8]')
 parser.add_argument('--learning_rate', type=float, default=0.001, help='初始学习率 [默认: 0.001]')
 parser.add_argument('--weight_decay', type=float, default=0.0005, help='优化器L2正则 [默认: 0]')
-parser.add_argument('--bn_decay_step', type=int, default=10, help='BN衰减周期（单位：epoch）[默认: 20]')
+parser.add_argument('--bn_decay_step', type=int, default=10, help='BN衰减周期(单位：epoch)[默认: 20]')
 parser.add_argument('--bn_decay_rate', type=float, default=0.5, help='BN衰减率 [默认: 0.5]')
 parser.add_argument('--lr_decay_steps', default='20,40,60', help='学习率衰减的epoch [默认: 80,120,160]')
 parser.add_argument('--lr_decay_rates', default='0.7,0.7,0.7', help='学习率衰减率 [默认: 0.1,0.1,0.1]')
@@ -51,7 +51,7 @@ LR_DECAY_RATES = [float(x) for x in FLAGS.lr_decay_rates.split(',')]
 
 # 日志目录准备
 if os.path.exists(LOG_DIR) and FLAGS.overwrite:
-    print('日志文件夹 %s 已存在，确定要覆盖吗？(Y/N)' % (LOG_DIR))
+    print('日志文件夹 %s 已存在, 确定要覆盖吗？(Y/N)' % (LOG_DIR))
     c = input()
     if c == 'n' or c == 'N':
         print('退出程序...')
@@ -85,16 +85,16 @@ print(len(TRAIN_DATALOADER))
 # 模型选择映射表
 '''
 1. 主干网络类型
-    ResNet50/ResNet101: 经典的残差网络，层数不同（50层/101层），ResNet101更深，表达能力更强，但计算量更大。
-    MobileNet: 轻量级网络，参数量和计算量都比ResNet小，适合对速度和资源有要求的场景。
+    ResNet50/ResNet101: 经典的残差网络, 层数不同(50层/101层), ResNet101更深, 表达能力更强, 但计算量更大。
+    MobileNet: 轻量级网络, 参数量和计算量都比ResNet小, 适合对速度和资源有要求的场景。
 2. 网络结构
-    deeplabv3: DeepLabV3 结构，适合语义分割，特征提取能力强。
-    deeplabv3plus: DeepLabV3+，是在DeepLabV3基础上增加了解码器模块，分割边界更精细，效果通常更好。
-    convnet_resnet101: 你项目自定义的网络，主干是ResNet101，通常用于特定任务（如吸取点检测）。
-    deeplabv3plus_resnet101_depth: 可能是支持深度输入的DeepLabV3+，适合RGBD等多模态输入。
+    deeplabv3: DeepLabV3 结构, 适合语义分割, 特征提取能力强。
+    deeplabv3plus: DeepLabV3+, 是在DeepLabV3基础上增加了解码器模块, 分割边界更精细, 效果通常更好。
+    convnet_resnet101: 你项目自定义的网络, 主干是ResNet101, 通常用于特定任务(如吸取点检测)。
+    deeplabv3plus_resnet101_depth: 可能是支持深度输入的DeepLabV3+, 适合RGBD等多模态输入。
 3. 选型建议
-    追求精度，显存和速度不是瓶颈：
-    推荐 deeplabv3plus_resnet101 或 deeplabv3plus_resnet101_depth（如果你有深度图）。
+    追求精度, 显存和速度不是瓶颈：
+    推荐 deeplabv3plus_resnet101 或 deeplabv3plus_resnet101_depth(如果你有深度图)。
 
     追求速度或设备资源有限：
     推荐 deeplabv3plus_mobilenet 或 deeplabv3_mobilenet。
@@ -132,9 +132,9 @@ if CHECKPOINT_PATH is not None and os.path.isfile(CHECKPOINT_PATH):
 
 net.to(device)
 
-criterion = nn.MSELoss()  # 损失函数，均方误差
+criterion = nn.MSELoss()  # 损失函数, 均方误差
 
-# 优化器设置，支持微调
+# 优化器设置, 支持微调
 if FLAGS.finetune:
     if 'deeplabv3' in FLAGS.model:
         conv1_params = list(map(id, net.module.backbone.conv1.parameters()))
@@ -237,9 +237,9 @@ def train():
         
         if EPOCH_CNT % 10 == 0: # 每10个epoch保存一次模型
 
-            save_dict = {'epoch': epoch+1, # 训练完一个epoch后，下次从epoch+1开始
+            save_dict = {'epoch': epoch+1, # 训练完一个epoch后, 下次从epoch+1开始
                         'optimizer_state_dict': optimizer.state_dict()}
-            try: # 如果使用了nn.DataParallel()，模型会作为DataParallel的子模块
+            try: # 如果使用了nn.DataParallel(), 模型会作为DataParallel的子模块
                 save_dict['model_state_dict'] = net.state_dict()
             except:
                 save_dict['model_state_dict'] = net.state_dict()

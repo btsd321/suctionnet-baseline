@@ -4,7 +4,7 @@ import numpy as np
 import os 
 
 def denormalize(tensor, mean, std):
-    # 对归一化的Tensor进行反归一化处理，恢复到原始像素分布
+    # 对归一化的Tensor进行反归一化处理, 恢复到原始像素分布
     mean = np.array(mean)
     std = np.array(std)
 
@@ -13,7 +13,7 @@ def denormalize(tensor, mean, std):
     return normalize(tensor, _mean, _std)
 
 class Denormalize(object):
-    # Denormalize类，用于将归一化的Tensor或numpy数组反归一化
+    # Denormalize类, 用于将归一化的Tensor或numpy数组反归一化
     def __init__(self, mean, std):
         mean = np.array(mean)
         std = np.array(std)
@@ -33,12 +33,12 @@ def set_bn_momentum(model, momentum=0.1):
             m.momentum = momentum
 
 def fix_bn(model):
-    # 将模型中所有BatchNorm2d层设置为评估模式（冻结均值和方差）
+    # 将模型中所有BatchNorm2d层设置为评估模式(冻结均值和方差)
     for m in model.modules():
         if isinstance(m, nn.BatchNorm2d):
             m.eval()
 
 def mkdir(path):
-    # 创建目录，如果目录不存在则新建
+    # 创建目录, 如果目录不存在则新建
     if not os.path.exists(path):
         os.mkdir(path)
